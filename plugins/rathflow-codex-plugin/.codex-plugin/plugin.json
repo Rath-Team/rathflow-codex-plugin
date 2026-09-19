@@ -1,6 +1,6 @@
 {
   "name": "rathflow-codex-plugin",
-  "version": "0.1.0",
+  "version": "0.1.0+codex.20260919182511",
   "description": "Use RathFlow through the local rathflow command-line client.",
   "author": {
     "name": "RathFlow contributors"
@@ -14,7 +14,7 @@
     "category": "Productivity",
     "capabilities": [],
     "defaultPrompt": [
-      "Show my RathFlow projects",
+      "Help me set up RathFlow",
       "List my recent RathFlow sessions",
       "Check RathFlow usage for the current project"
     ]

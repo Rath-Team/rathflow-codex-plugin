@@ -2,12 +2,12 @@
 
 让 Codex 通过本地 `rathflow` CLI 使用 RathFlow 的项目、会话、记忆、沙箱和账单功能。
 
-本插件是 **skill-only plugin**：
+本插件是 **skill-only plugin**，包含操作和初始化两个 Skill：
 
 - 不包含 RathFlow CLI；
 - 不启动 RathFlow Gateway；
 - 不包含 MCP Server；
-- 只负责告诉 Codex 什么时候以及如何调用本地 `rathflow` 命令。
+- 初始化 Skill 可指导 Codex 检查 CLI、设置远程地址、引导登录和选择项目；操作 Skill 指导它调用本地 `rathflow` 命令。
 
 ## 前置条件
 
@@ -16,9 +16,27 @@
 - 已有 RathFlow 账号；
 - 可以访问 RathFlow Gateway。
 
-## 安装 CLI
+## 安装 Plugin
 
-CLI 发布到 PyPI 后，推荐使用：
+仓库更新推送到 GitHub 后，从 Marketplace 安装：
+
+```bash
+codex plugin marketplace add Rath-Team/rathflow-codex-plugin
+codex plugin add rathflow-codex-plugin@rathflow-marketplace
+```
+
+重新启动 Codex，输入：
+
+```text
+帮我从零配置 RathFlow。先检查 CLI 是否已安装、连接的是哪个 Gateway；
+需要安装软件或更改现有配置时先征得我的同意，不要在聊天里询问密码。
+```
+
+Codex 会使用 `rathflow-setup` Skill 逐步引导；登录密码需要由你在自己的终端交互输入，不能交给 Codex。
+
+## CLI 安装现状
+
+**当前 `rathflow-cli` 尚未发布到 PyPI。**公开仓库只包含插件指令，不能为没有 CLI 获取渠道的新用户自动安装 CLI。正式发布后，CLI 可以用以下命令安装：
 
 ```bash
 pip install rathflow-cli
@@ -30,27 +48,27 @@ pip install rathflow-cli
 uv tool install rathflow-cli
 ```
 
-当前 CLI 尚未发布到 PyPI。开发测试时，可以从 RathFlow 源码安装：
+目前有权访问 RathFlow 源码的开发者可以用本地源码安装独立命令：
 
 ```bash
-uv pip install -e /path/to/RathFlow-v3/cli/python
+uv tool install /path/to/RathFlow-v3/cli/python
 ```
 
-确认安装成功：
+如果已在虚拟环境中安装 CLI，也可以激活该环境后启动 Codex。确认命令可被 Codex 找到：
 
 ```bash
 rathflow --help
 ```
 
-## 配置远程 RathFlow
+## 手动配置（可选）
 
-将 CLI 指向 RathFlow Gateway：
+不使用初始化 Skill 时，可以手动将 CLI 指向 RathFlow Gateway（写入 CLI 本地配置）：
 
 ```bash
-export RATHFLOW_BASE_URL=https://rathflow.lynwe.com
+rathflow config set base_url https://rathflow.lynwe.com
 ```
 
-登录你自己的 RathFlow 账号：
+如果设置了 `RATHFLOW_BASE_URL` 环境变量，它会覆盖配置文件里的地址。登录你自己的 RathFlow 账号：
 
 ```bash
 rathflow auth login -e your-email@example.com
@@ -59,20 +77,36 @@ rathflow project list
 rathflow project use <project_id>
 ```
 
-令牌保存在本机 CLI 配置中。不要把令牌粘贴到聊天、README 或代码仓库中。
+密码会在终端交互提示，不要把密码或令牌粘贴到聊天、README 或代码仓库中。
 
 如果使用的是自部署 Gateway，只需把 `RATHFLOW_BASE_URL` 换成自己的服务地址。
 
-## 安装 Plugin
+## 从零体验（现有开发环境）
 
-公开发布时，插件会通过 Marketplace 安装。典型流程是：
+你当前已经在本机安装过本地测试版插件和 CLI。想**重新体验安装**而不删除已有 RathFlow 登录，可以在新终端执行下面的步骤（先把更新推送到 GitHub，或把第一条命令的仓库名换为本地仓库绝对路径）：
 
 ```bash
-codex plugin marketplace add https://github.com/<owner>/rathflow-codex-plugin.git
+# 已有同名本地 Marketplace 时，先移除旧插件及入口（可选）
+codex plugin remove rathflow-codex-plugin@rathflow-marketplace
+codex plugin marketplace remove rathflow-marketplace
+# 若以前装过 rathflow-local-test，也先移除对应旧插件：
+codex plugin remove rathflow-codex-plugin@rathflow-local-test
+
+# 从 GitHub 重新添加并安装；本地未推送时使用 ~/my_workspace/rathflow-codex-plugin
+codex plugin marketplace add Rath-Team/rathflow-codex-plugin
 codex plugin add rathflow-codex-plugin@rathflow-marketplace
+codex plugin list
+
+# 在此终端模拟首次配置，不触碰已有的 RathFlow CLI 配置
+unset RATHFLOW_BASE_URL RATHFLOW_PROJECT RATHFLOW_TOKEN
+export RATHFLOW_CONFIG_DIR="$(mktemp -d)"
+echo "$RATHFLOW_CONFIG_DIR"  # 登录时另一终端也要使用这个目录
+codex
 ```
 
-安装后请重新启动 Codex。
+上面的移除命令仅针对已安装过旧插件的开发环境；首次安装时跳过。若 CLI 在虚拟环境内，请在启动 `codex` 前激活该环境。
+
+在新 Codex 会话里发送「帮我从零配置 RathFlow」。交互登录时另开一个终端，先 `export RATHFLOW_CONFIG_DIR=<上一步创建的临时目录>`，再执行 Codex 提示的登录命令；两个终端必须使用相同的配置目录。体验结束关闭终端即可恢复原 CLI 配置（临时目录中的令牌不会自动删除）。
 
 ## 测试
 
@@ -112,7 +146,9 @@ rathflow-codex-plugin/
 ├── .agents/plugins/marketplace.json
 └── plugins/rathflow-codex-plugin/
     ├── .codex-plugin/plugin.json
-    └── skills/rathflow-cli/SKILL.md
+    └── skills/
+        ├── rathflow-cli/SKILL.md
+        └── rathflow-setup/SKILL.md
 ```
 
 `marketplace.json` 只负责登记插件；`plugin.json` 和 `SKILL.md` 才是插件本身。当前仓库已经采用这种单仓库结构。
