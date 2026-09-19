@@ -1,0 +1,20 @@
+{
+  "name": "rathflow-marketplace",
+  "interface": {
+    "displayName": "Rathflow Marketplace"
+  },
+  "plugins": [
+    {
+      "name": "rathflow-codex-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/rathflow-codex-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
