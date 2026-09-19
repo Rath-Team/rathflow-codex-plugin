@@ -1,0 +1,22 @@
+{
+  "name": "rathflow-codex-plugin",
+  "version": "0.1.0",
+  "description": "Use RathFlow through the local rathflow command-line client.",
+  "author": {
+    "name": "RathFlow contributors"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "RathFlow CLI",
+    "shortDescription": "Use RathFlow through its local CLI.",
+    "longDescription": "Guides Codex to inspect and operate RathFlow through the installed rathflow CLI.",
+    "developerName": "RathFlow contributors",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": [
+      "Show my RathFlow projects",
+      "List my recent RathFlow sessions",
+      "Check RathFlow usage for the current project"
+    ]
+  }
+}
