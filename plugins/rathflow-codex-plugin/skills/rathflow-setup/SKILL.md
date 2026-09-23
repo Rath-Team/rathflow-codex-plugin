@@ -1,16 +1,98 @@
 ---
 name: rathflow-setup
-description: Set up or troubleshoot RathFlow CLI for Codex when the user asks to install, log in, connect a Gateway, select a project, or verify a new RathFlow plugin installation.
+description: Set up or troubleshoot RathFlow for Codex when the user asks to install the CLI, connect a Gateway, log in, select a project, or verify a RathFlow plugin installation.
 ---
 
 # Set up RathFlow
 
-Help the user reach a working `rathflow` CLI connection. The plugin provides instructions only; it does not install the CLI or start a Gateway by itself.
+Drive the user to a working `rathflow` CLI connection, and do every step yourself that does not
+need a human. The only step that truly needs the user is the password prompt. The plugin ships
+instructions only; it does not install the CLI or start a Gateway.
 
-1. Check `command -v rathflow` and `rathflow --help`. If unavailable, explain that the CLI is not yet published on PyPI. Ask the user for access to a trusted RathFlow CLI distribution or an authorized local source checkout before installing anything. With their approval and a local checkout, `uv tool install /path/to/RathFlow-v3/cli/python` installs the standalone Python CLI; alternatively use an existing activated venv. Do not install a similarly named PyPI package without confirming it is the official release.
-2. Check `rathflow config show` for the effective Gateway and project. If the Gateway is still the local default (`http://127.0.0.1:8080`) and the user does not run it, ask which remote Gateway to use. If they choose the RathFlow-hosted service, suggest `https://rathflow.lynwe.com`. After their confirmation, persist it with `rathflow config set base_url <gateway-url>`. An existing `RATHFLOW_BASE_URL` environment variable overrides the saved value; explain this if the effective URL does not change. Never silently replace a non-default endpoint.
-3. Check `rathflow whoami`. If not authenticated, ask the user to run `rathflow auth login -e <their-email>` in their own terminal so the password prompt stays private. Do not request a password or token in chat, use `--password`, or print credentials. If login fails, report the error rather than repeating attempts.
-4. Run `rathflow project list` once authenticated. If a project is already selected, preserve it. Otherwise ask the user which accessible project to use before running `rathflow project use <project_id>`.
-5. Verify with a read-only command such as `rathflow session list`. Report which steps succeeded and any remaining blocker; do not create a session or modify data just for verification.
+## 1. Check whether the CLI is installed
 
-If the user only asks about RathFlow operations and the CLI is already configured, use the `rathflow-cli` skill instead of repeating setup.
+```bash
+command -v rathflow
+rathflow --help
+```
+
+Treat the CLI as a released product: its installed command is the only supported interface. Do
+**not** search the filesystem for RathFlow source or a project checkout, do not look for a
+virtualenv, and do not build or install RathFlow from a local source tree.
+
+## 2. If the CLI is missing, stop and ask the user to install it
+
+Report that `rathflow` is not on `PATH` and hand the user a single install action to run in their
+own terminal:
+
+```bash
+uv tool install rathflow-cli     # or: pip install rathflow-cli
+```
+
+The CLI is not published on PyPI yet, so this may fail for now; in that case tell the user to obtain
+it from the official RathFlow distribution channel. Never install a similarly named third-party
+package, never clone or build RathFlow's source, and never start a Gateway. Once the CLI is
+installed, re-run this skill from step 1.
+
+## 3. Read the effective configuration
+
+```bash
+rathflow config show
+rathflow config list
+```
+
+State what is actually in force. Precedence is `--base-url`/`--project` flag > environment
+(`RATHFLOW_BASE_URL`, `RATHFLOW_PROJECT`, `RATHFLOW_TOKEN`) > profile > built-in default
+`http://127.0.0.1:8080`. If `RATHFLOW_CONFIG_DIR` is set, the config file is
+`$RATHFLOW_CONFIG_DIR/config.json`, not `~/.config/rathflow/config.json`; say which file this
+session reads and writes. Profiles are selected with `--profile`/`-p`.
+
+## 4. Choose the Gateway and prove it is the API
+
+- If the effective `base_url` is still the local default and the user does not run a local Gateway,
+  ask which Gateway to use; suggest the hosted `https://rathflow.lynwe.com`.
+- Verify before login: `curl -s -o /dev/null -w '%{http_code}' <gateway-url>/api/v1/sessions`
+  - `401` → the Gateway API is reachable; continue.
+  - `200` with `text/html`, or a connection error → wrong address. The hosted web app answers `200`
+    on almost every path, so never treat a `200` as proof of a working Gateway.
+- Persist only after confirmation: `rathflow config set base_url <gateway-url>`, then re-run
+  `rathflow config show` to confirm the effective URL actually changed. Never silently replace a
+  non-default endpoint, and call out when an environment variable overrides the saved value.
+
+## 5. Log in (the one step the user runs)
+
+`rathflow whoami` exiting with code 2 and `未登录` means not authenticated. Give the user exactly one
+command to run in their own terminal, in the same config directory this session uses:
+
+```bash
+RATHFLOW_CONFIG_DIR=<dir> rathflow auth login -e <their-email>
+```
+
+Never ask for or accept a password in chat, never pass `--password`, and never print tokens. If
+login fails, report the error; do not retry blindly.
+
+## 6. Select the project scope
+
+```bash
+rathflow project list
+```
+
+Keep an existing selection. If none is set, ask which accessible project to use, then
+`rathflow project use <project_id>`.
+
+## 7. Verify and report
+
+Run one read-only command such as `rathflow session list`, then report: CLI availability, effective
+Gateway, profile, config file/dir, login state, project scope, and any remaining blocker. Do not
+create a session or mutate data just to verify.
+
+## Installing the plugin itself
+
+Plugin installation is a terminal step, not something this skill can perform:
+`codex plugin marketplace add <repo>` then `codex plugin add rathflow-codex-plugin@rathflow-marketplace`.
+Plugin skills only load in a **new** Codex session, so install first, then start a fresh session.
+If the marketplace clone fails because the repo needs credentials, use the SSH source:
+`codex plugin marketplace add ssh://git@github.com/Rath-Team/rathflow-codex-plugin.git`.
+
+If the CLI is already configured and the user only asks about operations, use the `rathflow-cli`
+skill instead of repeating setup.

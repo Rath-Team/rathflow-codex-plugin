@@ -1,6 +1,6 @@
 {
   "name": "rathflow-codex-plugin",
-  "version": "0.1.0+codex.20260919182511",
+  "version": "0.1.0+codex.20260923090428",
   "description": "Use RathFlow through the local rathflow command-line client.",
   "author": {
     "name": "RathFlow contributors"

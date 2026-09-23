@@ -9,12 +9,18 @@ Use the local `rathflow` command as the interface to RathFlow. The CLI is an HTT
 
 ## Preconditions
 
-- Confirm that `rathflow` is installed with `rathflow --help`.
-- Confirm the configured endpoint and project with `rathflow config show`.
-- If installation, Gateway configuration, login, or project selection is missing, follow the `rathflow-setup` skill before attempting operations.
-- If authentication is missing, ask the user to run `rathflow auth login -e <email>` or provide an already configured token.
+- Confirm that `rathflow` is installed and runnable with `rathflow --help`. The CLI is a released
+  product: do not search the filesystem for source, a checkout, or a virtualenv, and do not build or
+  install from a local source tree. If it is missing, follow the `rathflow-setup` skill.
+- Confirm the effective endpoint, profile, and project with `rathflow config show`. Precedence is
+  `--base-url`/`--project` flag > `RATHFLOW_BASE_URL`/`RATHFLOW_PROJECT`/`RATHFLOW_TOKEN` > profile >
+  built-in default `http://127.0.0.1:8080`. `RATHFLOW_CONFIG_DIR` moves the config file away from
+  `~/.config/rathflow/`.
+- If installation, Gateway configuration, login, or project selection is missing, follow the
+  `rathflow-setup` skill before attempting operations.
+- If authentication is missing (`rathflow whoami` exits 2 with `未登录`), ask the user to run
+  `rathflow auth login -e <email>` in their own terminal.
 - Do not print, echo, or include access tokens in responses.
-- The default endpoint is local. Use `RATHFLOW_BASE_URL` or the CLI configuration when the Gateway is remote.
 
 ## Command Selection
 
