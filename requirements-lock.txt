@@ -1,0 +1,9 @@
+# This plugin has no third-party dependencies.
+#
+# The Codex plugin itself is instructions plus manifests, and the bundled
+# experimental MCP server (plugins/rathflow-codex-plugin/mcp/server.py) uses the
+# Python standard library only. This file exists so tooling that expects a
+# dependency lockfile finds an explicit, reviewed statement of that fact.
+#
+# If a Python dependency is ever added, generate the real lock here, e.g.:
+#   uv pip compile requirements.in -o requirements-lock.txt

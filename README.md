@@ -1,5 +1,7 @@
 # RathFlow Codex Plugin
 
+[English](README.en.md) | 中文
+
 让 Codex 通过本地 `rathflow` CLI 使用 RathFlow 的项目、会话、记忆、沙箱和账单功能。
 
 本插件是 **skill-only plugin**，包含操作和初始化两个 Skill：

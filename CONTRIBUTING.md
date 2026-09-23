@@ -4,8 +4,13 @@
 
 ```text
 .agents/plugins/marketplace.json          # marketplace registration
+.github/workflows/ci.yml                  # structure check + JSON validation
+.github/dependabot.yml                    # keeps SHA-pinned Actions fresh
+SECURITY.md                               # vulnerability disclosure policy
+requirements-lock.txt                     # explicit "no third-party deps"
 plugins/rathflow-codex-plugin/
 ├── .codex-plugin/plugin.json             # plugin manifest
+├── .codexignore                          # files Codex should not read/bundle
 ├── .mcp.json                             # experimental MCP server registration
 ├── assets/                               # logo and composer icon
 ├── mcp/server.py                         # experimental stdio MCP server
@@ -52,6 +57,10 @@ python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py \
 
 - Keep skills actionable: concrete commands, expected outputs, and explicit
   "stop and ask the user" conditions.
+- Pin GitHub Actions to commit SHAs (Dependabot proposes updates); never use
+  `write-all` permissions or unpinned actions.
+- Keep `requirements-lock.txt` accurate: today the plugin and MCP server use the
+  Python standard library only.
 - The plugin never searches the filesystem for RathFlow source, never builds or
   installs from a local checkout, and never starts the Gateway.
 - Never put credentials, tokens, or passwords in the repository, in chat

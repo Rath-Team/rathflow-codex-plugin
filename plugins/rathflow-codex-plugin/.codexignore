@@ -1,0 +1,9 @@
+# Files Codex should not read or bundle when working with this plugin.
+.git/
+__pycache__/
+*.py[cod]
+*.log
+.env
+.env.*
+node_modules/
+.venv/

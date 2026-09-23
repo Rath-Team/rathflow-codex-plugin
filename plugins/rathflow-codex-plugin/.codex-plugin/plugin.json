@@ -33,6 +33,9 @@
     "websiteURL": "https://rathflow.lynwe.com/",
     "logo": "./assets/icon.png",
     "composerIcon": "./assets/composer-icon.png",
+    "screenshots": [
+      "./assets/screenshot.png"
+    ],
     "defaultPrompt": [
       "Help me set up RathFlow",
       "List my recent RathFlow sessions",

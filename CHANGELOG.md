@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add `SECURITY.md` with private vulnerability reporting and plugin hardening notes.
+- Pin GitHub Actions to commit SHAs and add `.github/dependabot.yml` to keep them fresh.
+- Add `.codexignore` and an explicit `requirements-lock.txt` (no third-party deps).
+- Add `README.en.md` (English) with a language switcher in both READMEs.
+- Add `assets/screenshot.png` and reference it from `interface.screenshots`.
+
 ## 0.1.0
 
 - Skill-only plugin that drives RathFlow through the installed `rathflow` CLI.
