@@ -1,11 +1,12 @@
 {
   "name": "rathflow-codex-plugin",
-  "version": "0.1.0+codex.20260923090428",
+  "version": "0.1.0+codex.20260923115405",
   "description": "Use RathFlow through the local rathflow command-line client.",
   "author": {
     "name": "RathFlow contributors"
   },
   "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "RathFlow CLI",
     "shortDescription": "Use RathFlow through its local CLI.",

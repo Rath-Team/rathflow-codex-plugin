@@ -109,6 +109,26 @@ rathflow project use <project_id>
 
 如果使用的是自部署 Gateway，只需把 `RATHFLOW_BASE_URL` 换成自己的服务地址。
 
+## MCP（实验）
+
+插件带一个实验性 MCP server：`.mcp.json` 注册 `rathflow`，由 `mcp/server.py`（仅标准库）直接调 Gateway REST，提供只读工具 `rathflow_session_list`、`rathflow_memory_list`，**不需要 CLI**。
+
+- 鉴权沿用 CLI 的配置：`RATHFLOW_CONFIG_DIR`（默认 `~/.config/rathflow`）下的 `config.json`，或 `RATHFLOW_TOKEN` / `RATHFLOW_BASE_URL` / `RATHFLOW_PROJECT`，优先级与 CLI 一致。
+- 未登录时工具返回「先 `rathflow auth login`」，不静默失败、不打印令牌。
+- MCP server 只在**新会话**加载；`codex mcp list` 可确认注册状态。
+- 目前是 spike：工具面很窄，写操作、流式接口（memory search 等）都未接入。正式形态建议由 Gateway 直接托管 MCP（`type: http` + OAuth/API key），插件只保留注册与授权指引。
+
+本地验证：
+
+```bash
+cd plugins/rathflow-codex-plugin
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+  | RATHFLOW_CONFIG_DIR=~/.config/rathflow python3 mcp/server.py
+```
+
+注意：现有的 `rathflow-cli` Skill 仍指引 Codex 使用 CLI，与 MCP 面并存；如果 MCP 成为主路径，两个 Skill 需要相应收敛。
+
 ## 从零体验（现有开发环境）
 
 你当前已经在本机安装过本地测试版插件和 CLI。想**重新体验安装**而不删除已有 RathFlow 登录，可以在新终端执行下面的步骤（先把更新推送到 GitHub，或把第一条命令的仓库名换为本地仓库绝对路径）：
