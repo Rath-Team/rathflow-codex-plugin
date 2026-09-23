@@ -1,19 +1,38 @@
 {
   "name": "rathflow-codex-plugin",
-  "version": "0.1.0+codex.20260923115405",
-  "description": "Use RathFlow through the local rathflow command-line client.",
+  "version": "0.1.0",
+  "description": "Use RathFlow from Codex: inspect and operate projects, sessions, memory, sandboxes, and billing through the rathflow CLI.",
   "author": {
-    "name": "RathFlow contributors"
+    "name": "RathFlow contributors",
+    "url": "https://github.com/Rath-Team"
   },
+  "homepage": "https://rathflow.lynwe.com/",
+  "repository": "https://github.com/Rath-Team/rathflow-codex-plugin",
+  "license": "MIT",
+  "keywords": [
+    "rathflow",
+    "sessions",
+    "agents",
+    "memory",
+    "sandbox",
+    "billing",
+    "cli"
+  ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "RathFlow CLI",
-    "shortDescription": "Use RathFlow through its local CLI.",
-    "longDescription": "Guides Codex to inspect and operate RathFlow through the installed rathflow CLI.",
+    "displayName": "RathFlow",
+    "shortDescription": "Operate RathFlow projects, sessions, memory, and billing",
+    "longDescription": "Connect Codex to RathFlow through the installed rathflow CLI, and optionally through the bundled read-only MCP server. Codex can list and search projects, sessions, memory, and billing, and can run sandbox commands after you confirm.",
     "developerName": "RathFlow contributors",
     "category": "Productivity",
-    "capabilities": [],
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://rathflow.lynwe.com/",
+    "logo": "./assets/icon.png",
+    "composerIcon": "./assets/composer-icon.png",
     "defaultPrompt": [
       "Help me set up RathFlow",
       "List my recent RathFlow sessions",

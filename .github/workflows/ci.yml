@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Validate plugin structure
+        run: python scripts/check_plugin.py plugins/rathflow-codex-plugin
+      - name: Compile bundled MCP server
+        run: python -m compileall -q plugins/rathflow-codex-plugin/mcp
+      - name: Check workflow and marketplace JSON syntax
+        run: |
+          python - <<'PY'
+          import json
+          import pathlib
+
+          for path in [
+              pathlib.Path(".agents/plugins/marketplace.json"),
+              pathlib.Path("plugins/rathflow-codex-plugin/.codex-plugin/plugin.json"),
+              pathlib.Path("plugins/rathflow-codex-plugin/.mcp.json"),
+          ]:
+              json.loads(path.read_text(encoding="utf-8"))
+              print(f"ok: {path}")
+          PY

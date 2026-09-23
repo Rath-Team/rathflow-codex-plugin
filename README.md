@@ -191,9 +191,17 @@ rathflow session list
 ```text
 rathflow-codex-plugin/
 ├── README.md
+├── LICENSE
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── scripts/check_plugin.py
+├── .github/workflows/ci.yml
 ├── .agents/plugins/marketplace.json
 └── plugins/rathflow-codex-plugin/
     ├── .codex-plugin/plugin.json
+    ├── .mcp.json
+    ├── assets/{icon.png,composer-icon.png}
+    ├── mcp/server.py
     └── skills/
         ├── rathflow-cli/SKILL.md
         └── rathflow-setup/SKILL.md
@@ -203,10 +211,28 @@ rathflow-codex-plugin/
 
 ## 本地开发和验证
 
-验证插件结构：
+仓库自带的结构校验（CI 跑的就是它，零依赖）：
+
+```bash
+python3 scripts/check_plugin.py plugins/rathflow-codex-plugin
+```
+
+如果本机装了 Codex 的 `plugin-creator` skill，再跑一遍官方校验（更严格、权威）：
 
 ```bash
 python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/rathflow-codex-plugin
 ```
 
-更改 `SKILL.md` 或 `plugin.json` 后，重新安装插件并启动新的 Codex 会话进行测试。
+本地迭代用 cachebuster 触发重装，提 PR 前去掉 `+codex.*` 后缀恢复成正式 semver（CI 会对提交里的 cachebuster 给 warning）：
+
+```bash
+python3 ~/.codex/skills/.system/plugin-creator/scripts/update_plugin_cachebuster.py plugins/rathflow-codex-plugin
+```
+
+更改 `SKILL.md`、`plugin.json` 或 `.mcp.json` 后，重新安装插件并启动**新的** Codex 会话进行测试（Skill 与 MCP 只在会话启动时加载）。
+
+CI：`.github/workflows/ci.yml` 在 push/PR 时用 Python 3.10 与 3.12 跑上面的结构校验、编译 `mcp/server.py`、并校验三个 JSON 文件语法。更多约定见 `CONTRIBUTING.md`。
+
+## 许可证
+
+本仓库（插件指令与实验性 MCP server）采用 MIT，见 `LICENSE`；不涉及 RathFlow 服务端与 CLI 本体。
