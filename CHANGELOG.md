@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Rewrite both READMEs for first-time users (232 → 121 lines): drop the
+  developer-only sections that `CONTRIBUTING.md` already covers, fix the
+  "no MCP server" contradiction, and document the Windows `python3` limitation
+  of the experimental MCP server.
+- Fix the marketplace display name to `RathFlow Marketplace`.
 - `rathflow-cli` is now published on PyPI
   (<https://pypi.org/project/rathflow-cli/>, `0.1.0`), so `rathflow-setup` no
   longer tells the user the CLI is unavailable; it hands over

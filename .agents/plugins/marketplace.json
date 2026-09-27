@@ -1,7 +1,7 @@
 {
   "name": "rathflow-marketplace",
   "interface": {
-    "displayName": "Rathflow Marketplace"
+    "displayName": "RathFlow Marketplace"
   },
   "plugins": [
     {
