@@ -7,7 +7,7 @@
   telling the user to do it. The anti-source-hunting rule stays: no repo clone,
   no local checkout, no starting a Gateway.
 - Bump the plugin version to `0.1.1` so Codex picks up the updated skill from cache.
-- Requires `rathflow-cli >= 0.1.1`: `rathflow config show` now reports the real
+- Requires `rathflow-cli >= 0.1.2`: `rathflow config show` now reports the real
   environment variables only (`(未设置)` when unset), instead of echoing the
   merged effective value and looking like an env override.
 
