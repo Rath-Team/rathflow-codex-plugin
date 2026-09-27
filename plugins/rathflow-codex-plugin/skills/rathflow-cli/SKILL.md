@@ -14,7 +14,7 @@ Use the local `rathflow` command as the interface to RathFlow. The CLI is an HTT
   install from a local source tree. If it is missing, follow the `rathflow-setup` skill.
 - Confirm the effective endpoint, profile, and project with `rathflow config show`. Precedence is
   `--base-url`/`--project` flag > `RATHFLOW_BASE_URL`/`RATHFLOW_PROJECT`/`RATHFLOW_TOKEN` > profile >
-  built-in default `http://127.0.0.1:8080`. `RATHFLOW_CONFIG_DIR` moves the config file away from
+  built-in default `https://rathflow.lynwe.com`. `RATHFLOW_CONFIG_DIR` moves the config file away from
   `~/.config/rathflow/`.
 - If installation, Gateway configuration, login, or project selection is missing, follow the
   `rathflow-setup` skill before attempting operations.

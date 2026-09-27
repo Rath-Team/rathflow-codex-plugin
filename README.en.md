@@ -59,7 +59,7 @@ or accepts credentials in chat.
   local checkout.
 - **Reads the effective config** (`config show` / `config list`) and explains the
   precedence: flag > environment (`RATHFLOW_BASE_URL`, `RATHFLOW_PROJECT`,
-  `RATHFLOW_TOKEN`) > profile > default `http://127.0.0.1:8080`, plus where
+  `RATHFLOW_TOKEN`) > profile > default `https://rathflow.lynwe.com`, plus where
   `RATHFLOW_CONFIG_DIR` puts the file.
 - **Proves the Gateway is the API** with
   `curl -s -o /dev/null -w '%{http_code}' <gateway>/api/v1/sessions`: `401` means
@@ -71,15 +71,17 @@ or accepts credentials in chat.
 
 ## CLI availability
 
-`rathflow-cli` is **not on PyPI yet**, so a brand-new user cannot install it with
-`pip` today. Once published:
+`rathflow-cli` is **published on PyPI** ([pypi.org/project/rathflow-cli](https://pypi.org/project/rathflow-cli/),
+currently `0.1.0`):
 
 ```bash
-pip install rathflow-cli     # or: uv tool install rathflow-cli
+uv tool install rathflow-cli     # or: pipx install rathflow-cli
 ```
 
 Installing the CLI from a source checkout is a developer workflow, not part of
-the plugin flow — Codex will not do it.
+the plugin flow — Codex will not do it. If the install fails, Codex reports the
+error and stops rather than falling back to a local checkout. The CLI's built-in
+Gateway default is the hosted `https://rathflow.lynwe.com`.
 
 ## Manual configuration (optional)
 

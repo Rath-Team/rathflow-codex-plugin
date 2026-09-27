@@ -56,31 +56,23 @@ Codex 会使用 `rathflow-setup` Skill 逐步引导；登录密码需要由你�
 
 ## CLI 安装现状
 
-**当前 `rathflow-cli` 尚未发布到 PyPI。**公开仓库只包含插件指令，不能为没有 CLI 获取渠道的新用户自动安装 CLI。正式发布后，CLI 可以用以下命令安装：
+**`rathflow-cli` 已发布到 PyPI**（[pypi.org/project/rathflow-cli](https://pypi.org/project/rathflow-cli/)，当前 `0.1.0`）。任选一种装法：
 
 ```bash
+uv tool install rathflow-cli     # 推荐
+pipx install rathflow-cli
 pip install rathflow-cli
 ```
 
-或者：
-
-```bash
-uv tool install rathflow-cli
-```
-
-开发者在自己机器上从源码安装 CLI 属于开发流程，不属于插件/Codex 的配置流程——插件不会、也不应该这么做。源码安装方式仅作参考：
-
-```bash
-uv tool install /path/to/RathFlow-v3/cli/python
-```
-
-如果已在虚拟环境中安装 CLI，也可以激活该环境后启动 Codex。确认命令可被 Codex 找到：
+装完确认命令可被 Codex 找到：
 
 ```bash
 rathflow --help
 ```
 
-CLI 必须已安装且在 `PATH` 上（`rathflow --help` 能跑通）。插件只把它当已发布的产品使用：Codex 不会去寻找源码、不会从本地仓库安装，也不会替你启动 Gateway。如果命令不可用，它会停下来告诉你怎么安装。
+从源码安装 CLI 属于开发流程，不属于插件/Codex 的配置流程——插件不会、也不应该这么做。CLI 必须已安装且在 `PATH` 上（`rathflow --help` 能跑通）。插件只把它当已发布的产品使用：Codex 不会去寻找源码、不会从本地仓库安装，也不会替你启动 Gateway。如果安装失败，它会报告错误并停下，而不是去找本地 checkout。
+
+CLI 的默认网关已是托管的 `https://rathflow.lynwe.com`；自建网关用 `--base-url` 或 `RATHFLOW_BASE_URL` 覆盖。
 
 ## 手动配置（可选）
 

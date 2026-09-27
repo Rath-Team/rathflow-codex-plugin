@@ -26,13 +26,13 @@ Report that `rathflow` is not on `PATH` and hand the user a single install actio
 own terminal:
 
 ```bash
-uv tool install rathflow-cli     # or: pip install rathflow-cli
+uv tool install rathflow-cli     # or: pipx install rathflow-cli
 ```
 
-The CLI is not published on PyPI yet, so this may fail for now; in that case tell the user to obtain
-it from the official RathFlow distribution channel. Never install a similarly named third-party
-package, never clone or build RathFlow's source, and never start a Gateway. Once the CLI is
-installed, re-run this skill from step 1.
+`rathflow-cli` is published on PyPI (<https://pypi.org/project/rathflow-cli/>), so this normally
+succeeds. Never install a similarly named third-party package, never clone or build RathFlow's
+source, and never start a Gateway. If the install fails, report the error and stop; a local
+checkout is not a fallback. Once the CLI is installed, re-run this skill from step 1.
 
 ## 3. Read the effective configuration
 
@@ -43,14 +43,15 @@ rathflow config list
 
 State what is actually in force. Precedence is `--base-url`/`--project` flag > environment
 (`RATHFLOW_BASE_URL`, `RATHFLOW_PROJECT`, `RATHFLOW_TOKEN`) > profile > built-in default
-`http://127.0.0.1:8080`. If `RATHFLOW_CONFIG_DIR` is set, the config file is
+`https://rathflow.lynwe.com`. If `RATHFLOW_CONFIG_DIR` is set, the config file is
 `$RATHFLOW_CONFIG_DIR/config.json`, not `~/.config/rathflow/config.json`; say which file this
 session reads and writes. Profiles are selected with `--profile`/`-p`.
 
 ## 4. Choose the Gateway and prove it is the API
 
-- If the effective `base_url` is still the local default and the user does not run a local Gateway,
-  ask which Gateway to use; suggest the hosted `https://rathflow.lynwe.com`.
+- The built-in default is the hosted Gateway `https://rathflow.lynwe.com`. If the user runs their
+  own Gateway, use that address instead. If the effective `base_url` points at a local address
+  (`127.0.0.1`, `localhost`) that is not serving, stop and ask which Gateway to use.
 - Verify before login: `curl -s -o /dev/null -w '%{http_code}' <gateway-url>/api/v1/sessions`
   - `401` → the Gateway API is reachable; continue.
   - `200` with `text/html`, or a connection error → wrong address. The hosted web app answers `200`

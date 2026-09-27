@@ -18,7 +18,7 @@ import urllib.request
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_NAME = "rathflow"
 SERVER_VERSION = "0.1.0-spike"
-DEFAULT_BASE_URL = "http://127.0.0.1:8080"
+DEFAULT_BASE_URL = "https://rathflow.lynwe.com"
 REQUEST_TIMEOUT = 60
 
 
