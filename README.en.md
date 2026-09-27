@@ -54,10 +54,10 @@ handing you a manual configuration guide or asking the same question twice:
 
 - **Checks the CLI** with `command -v rathflow` / `rathflow --help` only. It does
   **not** search the filesystem for source, checkouts, or virtualenvs.
-- **Installs it when missing**: `rathflow-cli` is a normal PyPI package, so Codex
-  runs `uv tool install rathflow-cli` (falling back to `pipx` or
-  `pip install --user`) itself. `uv`/`pipx` are only installers — the wheel comes
-  from PyPI, not a local source tree. It stops only if every install path fails.
+- **Installs it when missing**: `rathflow-cli` is a normal package on PyPI and on
+  npm, so Codex runs `uv tool install rathflow-cli` (falling back to `pipx`,
+  `pip install --user`, then `npm install -g`) itself. The installers only fetch
+  from a registry — never a local source tree. It stops only if every path fails.
 - **Reads the effective config** (`config show` / `config list`) and explains the
   precedence: flag > environment (`RATHFLOW_BASE_URL`, `RATHFLOW_PROJECT`,
   `RATHFLOW_TOKEN`) > profile > default `https://rathflow.lynwe.com`, plus where
@@ -72,21 +72,24 @@ handing you a manual configuration guide or asking the same question twice:
 
 ## CLI availability
 
-`rathflow-cli` is **published on PyPI** ([pypi.org/project/rathflow-cli](https://pypi.org/project/rathflow-cli/),
-currently `0.1.0`):
+`rathflow-cli` is **published on PyPI and npm**
+([pypi.org/project/rathflow-cli](https://pypi.org/project/rathflow-cli/),
+[npmjs.com/package/rathflow-cli](https://www.npmjs.com/package/rathflow-cli)):
 
 ```bash
-uv tool install rathflow-cli                  # preferred when uv exists
+uv tool install rathflow-cli                  # preferred when uv exists (Python 3.10+)
 pipx install rathflow-cli                     # otherwise
 python3 -m pip install --user rathflow-cli    # fallback
+npm install -g rathflow-cli                   # equivalent Node implementation (Node 20+)
 ```
 
 You normally don't have to do this by hand: Codex installs the CLI when it is
-missing. All three installers fetch the same wheel from PyPI. Installing from a
-source checkout is a developer workflow, not part of the plugin flow — Codex
-never clones the repo or falls back to a local checkout; if the install fails it
-reports the error and stops. The CLI's built-in Gateway default is the hosted
-`https://rathflow.lynwe.com`.
+missing. The two packages are implementations of one CLI — same commands, options,
+output, exit codes and config file — so **install only one globally**; both provide
+a `rathflow` command and would shadow each other. Installing from a source checkout
+is a developer workflow, not part of the plugin flow — Codex never clones the repo or
+falls back to a local checkout; if the install fails it reports the error and stops.
+The CLI's built-in Gateway default is the hosted `https://rathflow.lynwe.com`.
 
 ## Manual configuration (optional)
 

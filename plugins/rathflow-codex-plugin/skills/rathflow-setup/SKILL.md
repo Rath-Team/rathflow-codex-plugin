@@ -20,22 +20,28 @@ Treat the CLI as a released product: its installed command is the only supported
 **not** search the filesystem for RathFlow source or a project checkout, do not look for a
 virtualenv, and do not build or install RathFlow from a local source tree.
 
-## 2. If the CLI is missing, install it from PyPI and continue
+## 2. If the CLI is missing, install it from a public registry and continue
 
-`rathflow-cli` is a normal PyPI package, so installing it is part of doing the setup — do it
-yourself instead of asking the user to. Pick the first installer that exists on this machine:
+`rathflow-cli` is a normal package on **PyPI** (Python 3.10+) and **npm** (Node 20+); both ship the
+same `rathflow` command, so installing it is part of doing the setup — do it yourself instead of
+asking the user to. Pick the first option that works on this machine:
 
 ```bash
-uv tool install rathflow-cli                  # 首选（uv 只是安装器，包同样来自 PyPI）
+uv tool install rathflow-cli                  # Python 首选（uv 只是安装器，包来自 PyPI）
 pipx install rathflow-cli                     # 没有 uv 时
 python3 -m pip install --user rathflow-cli    # 兜底
+npm install -g rathflow-cli                   # 有 Node 20+ 时等价
 ```
 
-The package name is exactly `rathflow-cli` (<https://pypi.org/project/rathflow-cli/>). All three
-installers download the same wheel from PyPI; `uv`/`pipx` are not local sources, they just isolate
-the tool. Afterwards make sure the command is reachable (`uv tool update-shell`, or `~/.local/bin`
-on `PATH`), re-run step 1, and continue with step 3. Only if every install path fails (no network,
-no Python) do you stop and report the error.
+The package name is exactly `rathflow-cli` on both registries
+(<https://pypi.org/project/rathflow-cli/>, <https://www.npmjs.com/package/rathflow-cli>). They are
+two implementations of one CLI — same commands, options, output and exit codes, same config file —
+and the installers are not local sources. **Install only one of them globally**: both provide a
+binary named `rathflow`, so a second install would shadow the first.
+
+Afterwards make sure the command is reachable (`uv tool update-shell`, `~/.local/bin` on `PATH`, or
+the npm global bin directory from `npm prefix -g`), re-run step 1, and continue with step 3. Only if
+every install path fails (no network, no Python, no Node) do you stop and report the error.
 
 Two hard rules for this step:
 

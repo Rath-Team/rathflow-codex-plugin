@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2
+
+- The CLI is now published on **npm** as well (`npm install -g rathflow-cli`), so
+  `rathflow-setup` offers both registries when the CLI is missing: `uv tool install`
+  → `pipx` → `pip install --user` → `npm install -g`. Both installs provide a
+  `rathflow` binary, so the skill tells the user to install only one globally.
+- Bump the plugin version to `0.1.2` so Codex picks up the updated skill from cache.
+
 ## 0.1.1
 
 - `rathflow-setup` now installs the CLI **itself** from PyPI (`uv tool install`

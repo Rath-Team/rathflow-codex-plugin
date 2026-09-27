@@ -46,7 +46,7 @@ Codex 会使用 `rathflow-setup` Skill 逐步引导；登录密码需要由你�
 `rathflow-setup` Skill 是一份可执行的排查流程，Codex 会自己完成下列步骤，而不是一上来就让你手工配置或反复追问：
 
 - **检查 CLI**：只看 `rathflow` 命令本身是否可用（`command -v rathflow` / `rathflow --help`）。**不会**在磁盘上找 RathFlow 源码、checkout 或虚拟环境。
-- **缺 CLI 时自己装**：直接从 PyPI 装 `rathflow-cli`（`uv tool install` → `pipx` → `pip install --user` 依次尝试）。`uv`/`pipx` 只是安装器，包同样来自 PyPI，不是本地源码。只有所有装法都失败（比如没网络）才会停下来报错。
+- **缺 CLI 时自己装**：从公开 registry 装 `rathflow-cli`（`uv tool install` → `pipx` → `pip install --user` → `npm install -g` 依次尝试）。安装器本身不是本地源码，包来自 PyPI/npm。只有所有装法都失败（比如没网络）才会停下来报错。
 - **判定配置**：`config show` / `config list`，并说明 `flag > 环境变量 > profile > 默认` 的优先级，以及 `RATHFLOW_CONFIG_DIR` 把配置文件放到了哪里。
 - **选 Gateway 并探活**：用 `curl -s -o /dev/null -w '%{http_code}' <gateway>/api/v1/sessions`，`401` 才代表网关 API 真的在；`200 text/html` 只是前端页面，不能当作可用依据。
 - **告诉你登录命令**：给出带上配置文件目录的一条 `rathflow auth login -e <email>`，由你在自己的终端输入密码。
@@ -54,15 +54,18 @@ Codex 会使用 `rathflow-setup` Skill 逐步引导；登录密码需要由你�
 
 ## CLI 安装现状
 
-**`rathflow-cli` 已发布到 PyPI**（[pypi.org/project/rathflow-cli](https://pypi.org/project/rathflow-cli/)）：正常情况你不用手动做什么，Codex 会在缺 CLI 时自己装。想手动装的话，下面三种等价，都从 PyPI 下载同一个包：
+**`rathflow-cli` 已发布到 PyPI 和 npm**（[pypi.org/project/rathflow-cli](https://pypi.org/project/rathflow-cli/)、[npmjs.com/package/rathflow-cli](https://www.npmjs.com/package/rathflow-cli)）：正常情况你不用手动做什么，Codex 会在缺 CLI 时自己装。想手动装的话，任选一种：
 
 ```bash
-uv tool install rathflow-cli                  # 有 uv 时首选
+uv tool install rathflow-cli                  # 有 uv 时首选（Python 3.10+）
 pipx install rathflow-cli                     # 没有 uv
 python3 -m pip install --user rathflow-cli     # 兜底
+npm install -g rathflow-cli                   # 等价的 Node 实现（Node 20+）
 ```
 
-装完确认命令可见（`~/.local/bin` 需在 `PATH` 上，或执行一次 `uv tool update-shell`）：
+两个包是同一个 CLI 的两套实现：命令、选项、输出、退出码和配置文件都一致。**只全局装一个**——两边都提供名为 `rathflow` 的命令，装两个会互相覆盖。
+
+装完确认命令可见（`~/.local/bin` 需在 `PATH` 上，或执行一次 `uv tool update-shell`；npm 全局 bin 目录见 `npm prefix -g`）：
 
 ```bash
 rathflow --help
