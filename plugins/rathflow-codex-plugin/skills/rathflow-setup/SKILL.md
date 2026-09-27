@@ -7,7 +7,7 @@ description: Set up or troubleshoot RathFlow for Codex when the user asks to ins
 
 Drive the user to a working `rathflow` CLI connection, and do every step yourself that does not
 need a human. The only step that truly needs the user is the password prompt. The plugin ships
-instructions only; it does not install the CLI or start a Gateway.
+instructions only; it does not bundle the CLI or start a Gateway.
 
 ## 1. Check whether the CLI is installed
 
@@ -20,19 +20,29 @@ Treat the CLI as a released product: its installed command is the only supported
 **not** search the filesystem for RathFlow source or a project checkout, do not look for a
 virtualenv, and do not build or install RathFlow from a local source tree.
 
-## 2. If the CLI is missing, stop and ask the user to install it
+## 2. If the CLI is missing, install it from PyPI and continue
 
-Report that `rathflow` is not on `PATH` and hand the user a single install action to run in their
-own terminal:
+`rathflow-cli` is a normal PyPI package, so installing it is part of doing the setup — do it
+yourself instead of asking the user to. Pick the first installer that exists on this machine:
 
 ```bash
-uv tool install rathflow-cli     # or: pipx install rathflow-cli
+uv tool install rathflow-cli                  # 首选（uv 只是安装器，包同样来自 PyPI）
+pipx install rathflow-cli                     # 没有 uv 时
+python3 -m pip install --user rathflow-cli    # 兜底
 ```
 
-`rathflow-cli` is published on PyPI (<https://pypi.org/project/rathflow-cli/>), so this normally
-succeeds. Never install a similarly named third-party package, never clone or build RathFlow's
-source, and never start a Gateway. If the install fails, report the error and stop; a local
-checkout is not a fallback. Once the CLI is installed, re-run this skill from step 1.
+The package name is exactly `rathflow-cli` (<https://pypi.org/project/rathflow-cli/>). All three
+installers download the same wheel from PyPI; `uv`/`pipx` are not local sources, they just isolate
+the tool. Afterwards make sure the command is reachable (`uv tool update-shell`, or `~/.local/bin`
+on `PATH`), re-run step 1, and continue with step 3. Only if every install path fails (no network,
+no Python) do you stop and report the error.
+
+Two hard rules for this step:
+
+- Never clone a RathFlow source tree, search the disk for a checkout, or build from source. A local
+  checkout is **not** a fallback for a failed install.
+- Never start a Gateway. This plugin drives the released CLI against a service the user already runs
+  (the hosted default or their own).
 
 ## 3. Read the effective configuration
 

@@ -1,6 +1,15 @@
 # Changelog
 
-## Unreleased
+## 0.1.1
+
+- `rathflow-setup` now installs the CLI **itself** from PyPI (`uv tool install`
+  → `pipx` → `pip install --user`) when `rathflow` is missing, instead of
+  telling the user to do it. The anti-source-hunting rule stays: no repo clone,
+  no local checkout, no starting a Gateway.
+- Bump the plugin version to `0.1.1` so Codex picks up the updated skill from cache.
+- Requires `rathflow-cli >= 0.1.1`: `rathflow config show` now reports the real
+  environment variables only (`(未设置)` when unset), instead of echoing the
+  merged effective value and looking like an env override.
 
 - Rewrite both READMEs for first-time users (232 → 121 lines): drop the
   developer-only sections that `CONTRIBUTING.md` already covers, fix the
@@ -8,10 +17,9 @@
   of the experimental MCP server.
 - Fix the marketplace display name to `RathFlow Marketplace`.
 - `rathflow-cli` is now published on PyPI
-  (<https://pypi.org/project/rathflow-cli/>, `0.1.0`), so `rathflow-setup` no
-  longer tells the user the CLI is unavailable; it hands over
-  `uv tool install rathflow-cli` (or `pipx`/`pip`) and reports a failed install
-  instead of falling back to a local checkout.
+  (<https://pypi.org/project/rathflow-cli/>), so `rathflow-setup` no longer tells
+  the user the CLI is unavailable; it installs from PyPI and reports a failed
+  install instead of falling back to a local checkout.
 - Document the CLI's new built-in Gateway default `https://rathflow.lynwe.com`
   (was `http://127.0.0.1:8080`) in the setup skill and both READMEs.
 - Add `SECURITY.md` with private vulnerability reporting and plugin hardening notes.

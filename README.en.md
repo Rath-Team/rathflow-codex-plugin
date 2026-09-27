@@ -54,10 +54,10 @@ handing you a manual configuration guide or asking the same question twice:
 
 - **Checks the CLI** with `command -v rathflow` / `rathflow --help` only. It does
   **not** search the filesystem for source, checkouts, or virtualenvs.
-- **Stops and hands off** when the CLI is missing, telling you to run
-  `uv tool install rathflow-cli` (or `pipx` / `pip install rathflow-cli`)
-  yourself. The CLI is distributed as a product, so Codex never clones the repo
-  or builds from a local checkout.
+- **Installs it when missing**: `rathflow-cli` is a normal PyPI package, so Codex
+  runs `uv tool install rathflow-cli` (falling back to `pipx` or
+  `pip install --user`) itself. `uv`/`pipx` are only installers — the wheel comes
+  from PyPI, not a local source tree. It stops only if every install path fails.
 - **Reads the effective config** (`config show` / `config list`) and explains the
   precedence: flag > environment (`RATHFLOW_BASE_URL`, `RATHFLOW_PROJECT`,
   `RATHFLOW_TOKEN`) > profile > default `https://rathflow.lynwe.com`, plus where
@@ -76,13 +76,17 @@ handing you a manual configuration guide or asking the same question twice:
 currently `0.1.0`):
 
 ```bash
-uv tool install rathflow-cli     # or: pipx install rathflow-cli
+uv tool install rathflow-cli                  # preferred when uv exists
+pipx install rathflow-cli                     # otherwise
+python3 -m pip install --user rathflow-cli    # fallback
 ```
 
-Installing the CLI from a source checkout is a developer workflow, not part of
-the plugin flow — Codex will not do it. If the install fails, Codex reports the
-error and stops rather than falling back to a local checkout. The CLI's built-in
-Gateway default is the hosted `https://rathflow.lynwe.com`.
+You normally don't have to do this by hand: Codex installs the CLI when it is
+missing. All three installers fetch the same wheel from PyPI. Installing from a
+source checkout is a developer workflow, not part of the plugin flow — Codex
+never clones the repo or falls back to a local checkout; if the install fails it
+reports the error and stops. The CLI's built-in Gateway default is the hosted
+`https://rathflow.lynwe.com`.
 
 ## Manual configuration (optional)
 
