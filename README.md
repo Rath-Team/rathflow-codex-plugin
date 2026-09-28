@@ -6,10 +6,10 @@
 
 本插件是 **skill-only plugin**：
 
-- 不包含、也不安装 RathFlow CLI —— CLI 由 PyPI 单独分发；
+- 不包含、也不安装 RathFlow CLI —— CLI 由 PyPI / npm 单独分发；
 - 不启动 RathFlow Gateway；
 - 只包含两个 Skill：`rathflow-setup`（初始化与排查）和 `rathflow-cli`（日常操作）；
-- 另附一个实验性只读 MCP server，见文末。
+- MCP server 由 CLI 自己提供（`rathflow mcp serve`），见文末。
 
 ## 前置条件
 
@@ -113,11 +113,23 @@ rathflow project use <project_id>
 
 Codex 应该调用 `rathflow session list` 这类 CLI 命令，而不是绕过 CLI 直接伪造 HTTP 请求。涉及创建、删除、写入、邀请、执行命令等修改操作时，它会先说明操作并获得你的确认。
 
-## MCP（实验）
+## MCP
 
-插件注册了一个实验性 MCP server（`.mcp.json` → `mcp/server.py`，仅标准库），直接调 Gateway REST，提供两个只读工具 `rathflow_session_list` 和 `rathflow_memory_list`，不使用 CLI。鉴权沿用 CLI 的配置与环境变量，未登录时返回"先 `rathflow auth login`"。它同样只在**新会话**加载，`codex mcp list` 可确认注册状态。
+插件的 `.mcp.json` 把 MCP server 注册成 CLI 的一个子命令：
 
-已知限制：启动命令写的是 `python3`，Windows 上通常没有这个名字（只有 `python` / `py`），需要自行调整 `.mcp.json`，Skill 部分不受影响。工具面也很窄（只读、无流式、无写操作），正式形态建议由 Gateway 直接托管远程 MCP。
+```json
+{ "mcpServers": { "rathflow": { "command": "rathflow", "args": ["mcp", "serve"] } } }
+```
+
+也就是说 server 本体在 `rathflow-cli` 包里，本仓库不再自带一份实现。好处是工具面与 CLI 的端点表同源，不会各自漂移。
+
+- 默认提供 14 个只读工具（身份、项目、会话、记忆、沙箱、工作流、用量，外加端点发现与逃生舱）；
+- 在 server 的环境里设 `RATHFLOW_MCP_WRITE=1` 会再多 5 个写工具（建会话、归档、写记忆、建沙箱、沙箱里执行命令），默认关闭；
+- 具名工具没覆盖的端点，用 `rathflow_endpoints` 查 key，再走 `rathflow_api_call`（等价 `rathflow api <Key>`）；
+- 鉴权与 CLI 同一份配置：先在终端跑一次 `rathflow auth login`，token 过期时 server 会自己续期；
+- 只在**新会话**加载，`codex mcp list` 可确认注册状态。
+
+已知限制：`mcp serve` 目前只在 **Python 版** CLI 里（npm 版尚未移植），所以要用 MCP 就得装 Python 包（`uv tool install rathflow-cli`）。Windows 上请确认 `rathflow.exe` 在 `PATH` 上。
 
 ## 许可证
 

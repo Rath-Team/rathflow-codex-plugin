@@ -1,6 +1,6 @@
 {
   "name": "rathflow-codex-plugin",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Use RathFlow from Codex: inspect and operate projects, sessions, memory, sandboxes, and billing through the rathflow CLI.",
   "author": {
     "name": "RathFlow contributors",
@@ -23,7 +23,7 @@
   "interface": {
     "displayName": "RathFlow",
     "shortDescription": "Operate RathFlow projects, sessions, memory, and billing",
-    "longDescription": "Connect Codex to RathFlow through the installed rathflow CLI, and optionally through the bundled read-only MCP server. Codex can list and search projects, sessions, memory, and billing, and can run sandbox commands after you confirm.",
+    "longDescription": "Connect Codex to RathFlow through the installed rathflow CLI, either with the bundled skills or with the MCP server the CLI itself provides (`rathflow mcp serve`). Codex can list and search projects, sessions, memory, and billing, and can run sandbox commands after you confirm.",
     "developerName": "RathFlow contributors",
     "category": "Productivity",
     "capabilities": [

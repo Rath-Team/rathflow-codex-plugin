@@ -7,13 +7,16 @@ description: Set up or troubleshoot RathFlow for Codex when the user asks to ins
 
 Drive the user to a working `rathflow` CLI connection, and do every step yourself that does not
 need a human. The only step that truly needs the user is the password prompt. The plugin ships
-instructions only; it does not bundle the CLI or start a Gateway.
+instructions only: it does not bundle the CLI, does not bundle an MCP server, and does not start a
+Gateway. The MCP server this plugin registers is `rathflow mcp serve` — a subcommand of the
+published CLI.
 
 ## 1. Check whether the CLI is installed
 
 ```bash
 command -v rathflow
 rathflow --help
+rathflow mcp serve --help    # 工具面走 MCP 时必须有；缺它说明 CLI 太旧
 ```
 
 Treat the CLI as a released product: its installed command is the only supported interface. Do
@@ -42,6 +45,11 @@ binary named `rathflow`, so a second install would shadow the first.
 Afterwards make sure the command is reachable (`uv tool update-shell`, `~/.local/bin` on `PATH`, or
 the npm global bin directory from `npm prefix -g`), re-run step 1, and continue with step 3. Only if
 every install path fails (no network, no Python, no Node) do you stop and report the error.
+
+MCP needs `rathflow-cli >= 0.1.4` **and** currently only ships in the Python package. If the user
+wants the MCP tools (rather than just the skills) and `mcp serve --help` fails, install the Python
+package even if the npm CLI is already present, and mention that the two must not both be first on
+`PATH`.
 
 Two hard rules for this step:
 
@@ -100,8 +108,23 @@ Keep an existing selection. If none is set, ask which accessible project to use,
 ## 7. Verify and report
 
 Run one read-only command such as `rathflow session list`, then report: CLI availability, effective
-Gateway, profile, config file/dir, login state, project scope, and any remaining blocker. Do not
-create a session or mutate data just to verify.
+Gateway, profile, config file/dir, login state, project scope, MCP availability, and any remaining
+blocker. Do not create a session or mutate data just to verify.
+
+## 8. MCP: what to tell the user
+
+The plugin's `.mcp.json` registers `rathflow mcp serve`, and Codex only loads MCP servers at session
+start. So:
+
+- the tools appear in a **new** session; if the user just installed or updated the CLI, tell them to
+  restart Codex;
+- writes are off unless `RATHFLOW_MCP_WRITE=1` is set in the server's environment — do not turn it
+  on unasked;
+- `codex mcp list` shows whether the server is registered. If it is not listed, the plugin is not
+  installed for this Codex home; run the marketplace/add steps below.
+
+When an MCP tool call fails with "not authenticated", the fix is the same as the CLI's: the user runs
+`rathflow auth login` in their own terminal, then the tool can be retried in the same session.
 
 ## Installing the plugin itself
 
@@ -113,3 +136,9 @@ If the marketplace clone fails because the repo needs credentials, use the SSH s
 
 If the CLI is already configured and the user only asks about operations, use the `rathflow-cli`
 skill instead of repeating setup.
+
+## Never do this
+
+- Never search the filesystem for a RathFlow checkout, and never build or run RathFlow from source.
+- Never start a Gateway.
+- Never install an MCP server from anywhere except the published `rathflow-cli` package.

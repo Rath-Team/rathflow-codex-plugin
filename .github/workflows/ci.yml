@@ -24,8 +24,20 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Validate plugin structure
         run: python scripts/check_plugin.py plugins/rathflow-codex-plugin
-      - name: Compile bundled MCP server
-        run: python -m compileall -q plugins/rathflow-codex-plugin/mcp
+      - name: Check the MCP registration points at a published entry point
+        run: |
+          python - <<'PY'
+          import json
+          import pathlib
+
+          mcp = json.loads(
+              pathlib.Path("plugins/rathflow-codex-plugin/.mcp.json").read_text(encoding="utf-8")
+          )
+          for name, server in mcp["mcpServers"].items():
+              assert server.get("command") == "rathflow", f"{name}: must call the CLI"
+              assert server.get("args") == ["mcp", "serve"], f"{name}: unexpected args"
+          print("ok: .mcp.json calls the published CLI entry point")
+          PY
       - name: Check workflow and marketplace JSON syntax
         run: |
           python - <<'PY'

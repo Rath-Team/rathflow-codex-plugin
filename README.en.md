@@ -125,19 +125,34 @@ Codex should run CLI commands such as `rathflow session list` rather than
 hand-rolling HTTP requests. For mutating actions (create, delete, write, invite,
 execute), it states the operation and asks for confirmation first.
 
-## MCP (experimental)
+## MCP
 
-The plugin registers an experimental MCP server (`.mcp.json` → `mcp/server.py`,
-standard library only) that calls the Gateway REST API directly and exposes two
-read-only tools, `rathflow_session_list` and `rathflow_memory_list`. It does not
-use the CLI; auth reuses the CLI config and environment variables, returning
-"run `rathflow auth login`" when unauthenticated. It loads in a **new** session
-only, and `codex mcp list` shows whether it is registered.
+The plugin's `.mcp.json` registers the MCP server that the CLI itself provides:
 
-Known limits: it starts via `python3`, which Windows usually does not provide
-(only `python` / `py`), so `.mcp.json` needs adjusting there — the skills are
-unaffected. The tool surface is deliberately narrow (read-only, no streaming, no
-writes); the production shape is a Gateway-hosted remote MCP.
+```json
+{ "mcpServers": { "rathflow": { "command": "rathflow", "args": ["mcp", "serve"] } } }
+```
+
+The server lives in the `rathflow-cli` package, so this repository no longer
+ships an implementation of its own — which keeps the tool surface on the same
+endpoint table as the CLI.
+
+- 14 read tools out of the box (identity, projects, sessions, memory, sandboxes,
+  workflows, usage, plus endpoint discovery and an escape hatch);
+- 5 more write tools once `RATHFLOW_MCP_WRITE=1` is set in the server's
+  environment (create/archive session, write memory, create sandbox, run a
+  sandbox command); writes stay off by default;
+- endpoints without a named tool are reachable through `rathflow_endpoints` +
+  `rathflow_api_call` (the same escape hatch as `rathflow api <Key>`);
+- auth is the CLI's own config: run `rathflow auth login` once, and the server
+  refreshes the token as the session goes;
+- it loads in a **new** session only, and `codex mcp list` shows whether it is
+  registered.
+
+Known limit: `mcp serve` currently ships in the **Python** package only (the npm
+CLI has not been ported yet), so using MCP means installing the Python package
+(`uv tool install rathflow-cli`). On Windows make sure `rathflow.exe` is on
+`PATH`.
 
 ## License
 

@@ -2,9 +2,13 @@
 
 ## Scope
 
-This repository contains Codex plugin instructions (skills), manifests, and an
-experimental MCP server that talks to the RathFlow Gateway. It does not contain
-the RathFlow service, the RathFlow CLI, or any credentials.
+This repository contains Codex plugin instructions (skills) and manifests. It
+does not contain the RathFlow service, the RathFlow CLI, an MCP server
+implementation, or any credentials.
+
+The MCP server the plugin registers is `rathflow mcp serve`, which ships inside
+the `rathflow-cli` package installed from PyPI / npm. Report vulnerabilities in
+it against <https://github.com/Rath-Team/rathflow-cli>, not here.
 
 ## Reporting a vulnerability
 
@@ -32,5 +36,10 @@ We aim to acknowledge reports within 3 business days.
 - Log in with `rathflow auth login -e <email>` in your own terminal, so the
   password prompt stays private.
 - The CLI writes its config with `0600` permissions because it contains tokens.
-- Treat the MCP server as read-only tooling: it exposes two read-only tools and
-  takes no write actions.
+- The MCP server starts read-only: writes are unavailable unless you opt in by
+  setting `RATHFLOW_MCP_WRITE=1` in its environment. Leave it unset unless you
+  want the agent to be able to create sessions, write memory or run sandbox
+  commands.
+- The MCP server runs under the same credentials as the CLI and refreshes the
+  token in place, so it inherits the config file's `0600` protection. Keep the
+  config directory private (`RATHFLOW_CONFIG_DIR`).

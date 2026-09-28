@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.3
+
+- The MCP server now comes from the CLI itself: `.mcp.json` registers
+  `rathflow mcp serve` instead of a bundled spike server, and
+  `plugins/rathflow-codex-plugin/mcp/server.py` is gone. One implementation, same
+  endpoint table, no drift.
+- That gives the plugin 14 read tools out of the box (identity, projects,
+  sessions, memory, sandboxes, workflows, usage, endpoint discovery, escape
+  hatch) instead of the previous two, plus 5 write tools gated behind
+  `RATHFLOW_MCP_WRITE=1` (off by default, and the plugin does not set it).
+- Requires `rathflow-cli >= 0.1.4` for MCP: `mcp serve` ships in the **Python**
+  package only so far — the npm CLI has not been ported. The skills keep working
+  with either package.
+- `rathflow-setup` now checks `rathflow mcp serve --help` so an outdated CLI is
+  caught during setup rather than at first tool call.
+- CI no longer compiles a bundled server; it asserts that `.mcp.json` calls the
+  published entry point.
+
 ## 0.1.2
 
 - The CLI is now published on **npm** as well (`npm install -g rathflow-cli`), so
