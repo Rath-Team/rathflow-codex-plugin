@@ -5,6 +5,11 @@ description: Set up or troubleshoot RathFlow for Codex when the user asks to ins
 
 # Set up RathFlow
 
+RathFlow (for the record, in case the user asks) is a hosted platform for AI coding agents: sessions
+and event streams, agent definitions and runs, sandboxes, project memory, assets and workflows, plus
+usage and billing. The web app is <https://rathflow.lynwe.com>; the plugin reaches it through the
+`rathflow` CLI.
+
 Drive the user to a working `rathflow` CLI connection, and do every step yourself that does not
 need a human. The only step that truly needs the user is the password prompt. The plugin ships
 instructions only: it does not bundle the CLI, does not bundle an MCP server, and does not start a
@@ -84,17 +89,42 @@ session reads and writes. Profiles are selected with `--profile`/`-p`.
   `rathflow config show` to confirm the effective URL actually changed. Never silently replace a
   non-default endpoint, and call out when an environment variable overrides the saved value.
 
-## 5. Log in (the one step the user runs)
+## 5. Get the user an account, then log in (the one step the user runs)
 
-`rathflow whoami` exiting with code 2 and `未登录` means not authenticated. Give the user exactly one
-command to run in their own terminal, in the same config directory this session uses:
+`rathflow whoami` exiting with code 2 and `未登录` means not authenticated. Before handing over a
+command, **ask whether the user already has a RathFlow account** — do not assume it. A new user has
+never installed this CLI and does not know what the login prompt is for, so say what the command
+does and what it will ask for.
+
+**No account yet** — offer both paths, web first (a human can pick a password and see the product):
+
+- Web sign-up: <https://rathflow.lynwe.com/register> (email, display name, password). Afterwards
+  they log in with the CLI as below.
+- Or straight from the CLI, which registers and logs in in one go:
+
+  ```bash
+  rathflow auth register -e <their-email>
+  ```
+
+**Has an account** — one command, run in **their own terminal**:
 
 ```bash
-RATHFLOW_CONFIG_DIR=<dir> rathflow auth login -e <their-email>
+rathflow auth login -e <their-email>
 ```
 
-Never ask for or accept a password in chat, never pass `--password`, and never print tokens. If
-login fails, report the error; do not retry blindly.
+Add a `RATHFLOW_CONFIG_DIR=<dir> ` prefix only when this session's config directory is not the
+default `~/.config/rathflow`, and say why the prefix is there. Likewise, if `rathflow` is not on the
+user's `PATH` (a plain `uv tool install` puts it in `~/.local/bin`), tell them to run
+`uv tool update-shell` so the command works in their terminal **and** in the Codex session that will
+launch the MCP server.
+
+Rules for this step:
+
+- The password is typed into the interactive prompt. Never ask for or accept a password in chat,
+  never pass `--password`, and never print tokens.
+- If login fails, report the error verbatim; do not retry blindly.
+- If they have no account and do not want one, stop there — everything else is already set up, and
+  the plugin simply has no credentials to work with.
 
 ## 6. Select the project scope
 

@@ -15,7 +15,7 @@
 
 - 已安装 Codex；
 - 已安装 `rathflow` CLI 且在 `PATH` 上（`rathflow --help` 可运行）；插件不会替你寻找源码或本地部署 CLI；
-- 已有 RathFlow 账号；
+- 已有 RathFlow 账号，或先到 <https://rathflow.lynwe.com/register> 注册（也可以直接 `rathflow auth register -e <邮箱>`，注册成功即登录）；
 - 可以访问 RathFlow Gateway。
 
 ## 安装 Plugin

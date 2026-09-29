@@ -7,18 +7,20 @@ through the locally installed `rathflow` CLI.
 
 This is a **skill-only plugin**:
 
-- it does not ship or install the RathFlow CLI (the CLI is distributed on PyPI);
+- it does not ship or install the RathFlow CLI (the CLI is distributed on PyPI / npm);
 - it does not start the RathFlow Gateway;
 - it contains exactly two skills: `rathflow-setup` (setup and troubleshooting)
   and `rathflow-cli` (day-to-day operations);
-- it also registers one experimental read-only MCP server, described below.
+- the MCP server it registers is provided by the CLI itself (`rathflow mcp serve`),
+  described below.
 
 ## Requirements
 
 - Codex installed;
 - the `rathflow` CLI installed and on `PATH` (`rathflow --help` works). The
   plugin will not look for source or install the CLI for you;
-- a RathFlow account;
+- a RathFlow account, or sign up first at <https://rathflow.lynwe.com/register>
+  (`rathflow auth register -e <email>` also works and logs you in on success);
 - network access to your RathFlow Gateway.
 
 ## Install

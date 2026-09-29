@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.4
+
+- `rathflow-setup` no longer assumes the user already has an account, and says
+  what RathFlow is. A zero-knowledge run showed the agent finding
+  `rathflow auth register` only by trawling `rathflow auth --help`; the skill now
+  asks the question outright and offers the web sign-up
+  (<https://rathflow.lynwe.com/register>) or `rathflow auth register -e <email>`.
+- Login instructions are now explicit about the details a first-timer needs:
+  which directory the prefix refers to (only when it is not `~/.config/rathflow`)
+  and that `uv tool update-shell` is needed so the command also works in the
+  Codex session that launches the MCP server.
+- Both READMEs gained the sign-up pointer, and the English one no longer
+  describes the removed bundled MCP server.
+
 ## 0.1.3
 
 - The MCP server now comes from the CLI itself: `.mcp.json` registers
