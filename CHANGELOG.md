@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5
+
+- `rathflow-setup` no longer lets "MCP registered and enabled" pass for success.
+  MCP servers are spawned once per session, so a CLI installed mid-session means
+  that session's server already failed to start; the skill now says to report
+  that plainly and to restart Codex before expecting the tools.
+
 ## 0.1.4
 
 - `rathflow-setup` no longer assumes the user already has an account, and says

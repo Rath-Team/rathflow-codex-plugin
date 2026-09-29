@@ -138,16 +138,25 @@ Keep an existing selection. If none is set, ask which accessible project to use,
 ## 7. Verify and report
 
 Run one read-only command such as `rathflow session list`, then report: CLI availability, effective
-Gateway, profile, config file/dir, login state, project scope, MCP availability, and any remaining
-blocker. Do not create a session or mutate data just to verify.
+Gateway, profile, config file/dir, login state, project scope, MCP status, and any remaining blocker.
+Do not create a session or mutate data just to verify.
+
+**Registered is not the same as working.** MCP servers are spawned once, at session start. If you
+installed or upgraded the CLI during this session, the running session's MCP server already failed
+to start (its `exec` of `rathflow` happened before the binary existed) — say so plainly, and tell the
+user to restart Codex before expecting the tools. Reporting "MCP: registered and enabled" in that
+situation reads as success and is wrong.
 
 ## 8. MCP: what to tell the user
 
 The plugin's `.mcp.json` registers `rathflow mcp serve`, and Codex only loads MCP servers at session
 start. So:
 
-- the tools appear in a **new** session; if the user just installed or updated the CLI, tell them to
-  restart Codex;
+- the tools appear in a **new** session. If the CLI was installed or upgraded in this session, the
+  server in the running session already failed to start: restart Codex, then `codex mcp list` and a
+  first tool call are the real proof;
+- do not report MCP as working on the strength of the registration alone, and do not paper over a
+  startup failure — quote it;
 - writes are off unless `RATHFLOW_MCP_WRITE=1` is set in the server's environment — do not turn it
   on unasked;
 - `codex mcp list` shows whether the server is registered. If it is not listed, the plugin is not
