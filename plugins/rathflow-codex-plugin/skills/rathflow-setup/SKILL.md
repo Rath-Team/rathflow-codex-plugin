@@ -141,11 +141,17 @@ Run one read-only command such as `rathflow session list`, then report: CLI avai
 Gateway, profile, config file/dir, login state, project scope, MCP status, and any remaining blocker.
 Do not create a session or mutate data just to verify.
 
-**Registered is not the same as working.** MCP servers are spawned once, at session start. If you
-installed or upgraded the CLI during this session, the running session's MCP server already failed
-to start (its `exec` of `rathflow` happened before the binary existed) — say so plainly, and tell the
-user to restart Codex before expecting the tools. Reporting "MCP: registered and enabled" in that
-situation reads as success and is wrong.
+**Registered is not the same as working.** MCP servers are spawned once, at session start, so if you
+installed or upgraded the CLI during this session the running session's server already failed to
+start (its `exec` of `rathflow` happened before the binary existed). Never report MCP as ready in
+that case. Use these exact slots so nothing gets paraphrased away:
+
+```text
+MCP       需要重启 Codex 才会生效 —— 本次会话启动时 rathflow 还不存在
+下一步    1) 重启 Codex  2) 让工具出现  3) 再跑一次验证
+```
+
+Only write `MCP  已可用` when the tools were already live in this session.
 
 ## 8. MCP: what to tell the user
 

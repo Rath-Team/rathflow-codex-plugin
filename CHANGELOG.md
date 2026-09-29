@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.6
+
+- The report slot is now a literal template instead of prose. A rerun still
+  produced "CLI 和 MCP 都就绪" for a session whose MCP server had failed to
+  spawn, so the skill hands over the exact lines to print and forbids
+  `MCP  已可用` unless the tools were live in that session.
+
 ## 0.1.5
 
 - `rathflow-setup` no longer lets "MCP registered and enabled" pass for success.
