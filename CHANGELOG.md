@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.7
+
+- The setup skill now installs `rathflow-cli[socks]` on the Python paths. Without
+  the extra, a desktop proxy setup that exports `ALL_PROXY=socks://...` (Clash is
+  the common one) makes the very first CLI call die with a bare
+  `ValueError: Unknown scheme for proxy URL` -- a traceback that says nothing
+  about proxies and invites the agent to go bug-hunting instead.
+
 ## 0.1.6
 
 - The report slot is now a literal template instead of prose. A rerun still

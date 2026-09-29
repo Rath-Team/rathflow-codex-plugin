@@ -35,11 +35,18 @@ same `rathflow` command, so installing it is part of doing the setup — do it y
 asking the user to. Pick the first option that works on this machine:
 
 ```bash
-uv tool install rathflow-cli                  # Python 首选（uv 只是安装器，包来自 PyPI）
-pipx install rathflow-cli                     # 没有 uv 时
-python3 -m pip install --user rathflow-cli    # 兜底
-npm install -g rathflow-cli                   # 有 Node 20+ 时等价
+uv tool install 'rathflow-cli[socks]'            # Python 首选（uv 只是安装器，包来自 PyPI）
+pipx install 'rathflow-cli[socks]'               # 没有 uv 时
+python3 -m pip install --user 'rathflow-cli[socks]'   # 兜底
+npm install -g rathflow-cli                      # 有 Node 20+ 时等价
 ```
+
+Install the `[socks]` extra on the Python paths. It costs one small dependency and prevents a hard
+failure: many desktop proxy setups (Clash and friends) export `ALL_PROXY=socks://…`, which makes
+`httpx` raise a bare `ValueError: Unknown scheme for proxy URL` on the **first** CLI call — a raw
+traceback with no hint about the proxy. With the extra installed the same command just works. If you
+skip it, you must instead have the user clear `ALL_PROXY` in every shell, including the one Codex
+launches the MCP server from.
 
 The package name is exactly `rathflow-cli` on both registries
 (<https://pypi.org/project/rathflow-cli/>, <https://www.npmjs.com/package/rathflow-cli>). They are

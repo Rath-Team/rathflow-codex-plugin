@@ -33,6 +33,23 @@ python3 ~/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py \
   plugins/rathflow-codex-plugin
 ```
 
+## Zero-knowledge dry run
+
+`scripts/naive-install.sh` builds a throwaway "brand-new user" environment -- clean
+`HOME`/`CODEX_HOME`, no `rathflow` anywhere on `PATH`, no `RATHFLOW_*` variables, no
+account -- installs the plugin, and optionally drives a Codex turn through it:
+
+```bash
+scripts/naive-install.sh                       # prepare, print how to enter
+scripts/naive-install.sh --run                 # prepare, then open a session
+scripts/naive-install.sh --local . --prompt "我想试试 RathFlow" --assert
+```
+
+`--local` points the marketplace at a working tree, so skill changes can be checked
+before they are pushed. `--assert` fails the run when the agent went looking for
+source or never told the user how to get an account. The environment is a temp
+directory: delete it and nothing is left behind.
+
 ## Iterate on a local install
 
 1. Bump the manifest with a cachebuster token:
