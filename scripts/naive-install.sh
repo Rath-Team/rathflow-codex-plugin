@@ -258,8 +258,20 @@ if [ -n "$PROMPT" ]; then
     [ "$bad" = 0 ] && echo "   没有找源码/本地部署痕迹 ✓" || { echo "   出现找源码/本地部署痕迹 $bad 处 ✗"; fail=1; }
     grep -qE "auth (login|register)" "$LOG" && echo "   给了注册/登录路径 ✓" \
       || { echo "   没给注册/登录路径 ✗"; fail=1; }
-    grep -qE "重开|重启|restart" "$LOG" && echo "   提醒了重开会话 ✓" \
-      || echo "   （本次会话若无 MCP 启动失败，可不提重开）"
+    # 关键契约：CLI 不存在时 MCP server 也必须起来了。工具调用返回 isError（未登录）
+    # 是预期的；"failed to start" 才是回归。
+    if grep -qE "mcp: rathflow/rathflow_[a-z_]+ started" "$LOG"; then
+      echo "   MCP server 在无 CLI 的环境里起来了 ✓"
+    else
+      echo "   MCP server 没被调用到（可能没走 MCP 面）✗"
+      fail=1
+    fi
+    if grep -qE "MCP client for .rathflow. failed to start|MCP startup failed" "$LOG"; then
+      echo "   MCP 启动失败 —— 这正是本次要修掉的回归 ✗"
+      fail=1
+    else
+      echo "   MCP 没有启动失败 ✓"
+    fi
     [ "$fail" = 0 ] || exit 1
   fi
 elif [ "$RUN" = 1 ]; then
