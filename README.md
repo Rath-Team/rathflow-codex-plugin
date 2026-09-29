@@ -2,20 +2,21 @@
 
 [English](README.en.md) | 中文
 
-让 Codex 通过本地 `rathflow` CLI 使用 RathFlow 的项目、会话、记忆、沙箱和账单功能。
+让 Codex 通过插件自带的 MCP server（或本地 `rathflow` CLI）使用 RathFlow 的项目、会话、记忆、沙箱和账单功能。
 
-本插件是 **skill-only plugin**：
+本插件自带 MCP server：
 
-- 不包含、也不安装 RathFlow CLI —— CLI 由 PyPI / npm 单独分发；
-- 不启动 RathFlow Gateway；
-- 只包含两个 Skill：`rathflow-setup`（初始化与排查）和 `rathflow-cli`（日常操作）；
-- MCP server 由 CLI 自己提供（`rathflow mcp serve`），见文末。
+- MCP server 随插件分发（`server/` 目录，纯 Python 标准库，零第三方依赖），**不需要先装任何东西**；
+- 不包含、也不启动 RathFlow Gateway；
+- 包含两个 Skill：`rathflow-setup`（初始化与排查）和 `rathflow-cli`（日常操作）；
+- `rathflow` CLI（PyPI / npm 单独分发）只在**登录**和命令行操作时需要 —— 插件不会替你找源码或本地部署。
 
 ## 前置条件
 
 - 已安装 Codex；
-- 已安装 `rathflow` CLI 且在 `PATH` 上（`rathflow --help` 可运行）；插件不会替你寻找源码或本地部署 CLI；
-- 已有 RathFlow 账号，或先到 <https://rathflow.lynwe.com/register> 注册（也可以直接 `rathflow auth register -e <邮箱>`，注册成功即登录）；
+- 已安装本插件（见下一节）——MCP 工具即刻可用，不需要其他安装；
+- 需要一个 RathFlow 账号，或先到 <https://rathflow.lynwe.com/register> 注册；
+- 首次使用要登录：安装 `rathflow` CLI 后在终端跑一次 `rathflow auth login -e <邮箱>`（或在 server 环境里提供 `RATHFLOW_TOKEN`）；MCP 与 CLI 读同一份配置；
 - 可以访问 RathFlow Gateway。
 
 ## 安装 Plugin
@@ -54,7 +55,7 @@ Codex 会使用 `rathflow-setup` Skill 逐步引导；登录密码需要由你�
 
 ## CLI 安装现状
 
-**`rathflow-cli` 已发布到 PyPI 和 npm**（[pypi.org/project/rathflow-cli](https://pypi.org/project/rathflow-cli/)、[npmjs.com/package/rathflow-cli](https://www.npmjs.com/package/rathflow-cli)）：正常情况你不用手动做什么，Codex 会在缺 CLI 时自己装。想手动装的话，任选一种：
+**`rathflow-cli` 已发布到 PyPI 和 npm**（[pypi.org/project/rathflow-cli](https://pypi.org/project/rathflow-cli/)、[npmjs.com/package/rathflow-cli](https://www.npmjs.com/package/rathflow-cli)）：插件的 MCP 工具不需要它，但**登录**需要。Codex 会在需要时自己装；想手动装的话，任选一种：
 
 ```bash
 uv tool install 'rathflow-cli[socks]'         # 有 uv 时首选（Python 3.10+）
@@ -117,27 +118,29 @@ Codex 应该调用 `rathflow session list` 这类 CLI 命令，而不是绕过 C
 
 ## MCP
 
-插件的 `.mcp.json` 把 MCP server 注册成 CLI 的一个子命令：
+插件自带一个 stdio MCP server（`server/`，Python 标准库实现）。`.mcp.json` 用
+`python3 -c '<引导脚本>'` 启动它，引导脚本按
+`$CODEX_HOME/plugins/cache/*/rathflow-codex-plugin/*/server/__main__.py` 定位插件自己那份实现
+—— 不依赖 `PATH` 上有没有 `rathflow`，新机器装完插件就能用。
 
-```json
-{ "mcpServers": { "rathflow": { "command": "rathflow", "args": ["mcp", "serve"] } } }
-```
+- 默认提供 10 个只读工具（身份、项目、会话、记忆、沙箱、工作流、用量、端点发现）；
+- 另有一个 `rathflow_project_use`（只改本地配置）始终可见；在 server 环境里设
+  `RATHFLOW_MCP_WRITE=1` 会再放开 `rathflow_api_call` 的写端点，默认关闭；
+- 具名工具没覆盖的端点，用 `rathflow_endpoints` 查 key，再走 `rathflow_api_call`；
+- 鉴权与 CLI 同一份配置（`~/.config/rathflow/config.json`，可用 `RATHFLOW_CONFIG_DIR` 改）。
+  先用 CLI 登录一次，token 过期时 server 自己续期；
+- 代理：server 自己支持 `http` / `socks5h` 代理，并会把 `socks://`、`socks4://` 规范成
+  `socks5h://`，不需要 `[socks]` extra、也不需要 `socksio`。但 Codex 启动 MCP server 时会**过滤
+  环境变量**（核心变量 + 插件 `.mcp.json` 里 `env_vars` 列出的名字），所以代理变量必须存在于启动
+  Codex 的那个 shell 里；
+- 只在**新会话**加载。`codex mcp list` 可确认注册状态；未登录时工具会返回明确提示，引导用户去
+  `rathflow auth login`，而不是去找源码或本地部署。
 
-也就是说 server 本体在 `rathflow-cli` 包里，本仓库不再自带一份实现。好处是工具面与 CLI 的端点表同源，不会各自漂移。
+## 已知限制
 
-- 默认提供 14 个只读工具（身份、项目、会话、记忆、沙箱、工作流、用量，外加端点发现与逃生舱）；
-- 在 server 的环境里设 `RATHFLOW_MCP_WRITE=1` 会再多 5 个写工具（建会话、归档、写记忆、建沙箱、沙箱里执行命令），默认关闭；
-- 具名工具没覆盖的端点，用 `rathflow_endpoints` 查 key，再走 `rathflow_api_call`（等价 `rathflow api <Key>`）；
-- 鉴权与 CLI 同一份配置：先在终端跑一次 `rathflow auth login`，token 过期时 server 会自己续期；
-- 代理：Codex 启动 MCP server 时会**过滤环境变量**（只保留核心变量 + 插件 `.mcp.json` 里 `env_vars` 列出的名字）。插件已转发 `ALL_PROXY` / `HTTP(S)_PROXY` / `NO_PROXY`（大小写都算），所以代理必须设在启动 Codex 的那个 shell 里；只导出在别的终端里的代理不会传进来。
-- 只在**新会话**加载，`codex mcp list` 可确认注册状态。
-
-装插件、装 CLI 之前的那一次会话**一定**会看到 `⚠ MCP client for rathflow failed to start: MCP startup failed: No such file or directory (os error 2)`：MCP server 是在会话启动时 spawn 的，那一刻 `rathflow` 还不在 `PATH` 上。这是预期顺序，不是插件坏了，也不需要去找源码或本地部署 —— 装完 CLI 重启 Codex 就好了。CLI 装好后仍然报 `handshaking with MCP server failed` / `connection closed` / 超时，才是真问题，把原文贴出来排查。
-
-已知限制：`mcp serve` 目前只在 **Python 版** CLI 里（npm 版尚未移植），所以要用 MCP 就得装 Python 包（`uv tool install rathflow-cli`）。Windows 上请确认 `rathflow.exe` 在 `PATH` 上。
-
-如果 `rathflow --version` 低于 0.1.5，或者 `rathflow mcp serve --help` 报 `No such command 'mcp'`，说明 `PATH` 上是一个旧安装（常见的：以前留下的手写 wrapper、旧 venv 的入口、旧 dev 版）。插件会按提示对齐：从 PyPI 升级后重新解析 `command -v rathflow`；若旧文件仍在前面遮蔽新版，就把它移到 `<path>.bak-<时间戳>` 并告诉你移了哪个文件。不要去改它背后那个 venv。
-
+- 启动命令是 `python3`，因此需要机器上有 Python 3.9+（Codex 官方插件脚手架同样假定 python3 存在）。
+  Windows 上如果只有 `py`，把 `.mcp.json` 里的 `command` 改成 `py`。
+- 插件内 server 与 CLI 的工具面同源，但**不是同一份代码**：CLI 改动端点后，插件侧需要同步。
 ## 许可证
 
-本仓库（插件指令与实验性 MCP server）采用 MIT，见 `LICENSE`；不涉及 RathFlow 服务端与 CLI 本体。
+本仓库（插件指令与自带的 MCP server）采用 MIT，见 `LICENSE`；不涉及 RathFlow 服务端与 CLI 本体。

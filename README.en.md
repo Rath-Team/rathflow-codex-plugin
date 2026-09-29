@@ -3,24 +3,27 @@
 [中文](README.md) | English
 
 Let Codex use RathFlow — projects, sessions, memory, sandboxes, and billing —
-through the locally installed `rathflow` CLI.
+through the MCP server bundled with this plugin, or through the local `rathflow` CLI.
 
-This is a **skill-only plugin**:
+This plugin bundles its own MCP server:
 
-- it does not ship or install the RathFlow CLI (the CLI is distributed on PyPI / npm);
-- it does not start the RathFlow Gateway;
+- the server ships with the plugin (`server/`, Python standard library only, zero
+  third-party dependencies), so **nothing has to be installed first**;
+- it does not ship, install, or start the RathFlow Gateway;
 - it contains exactly two skills: `rathflow-setup` (setup and troubleshooting)
   and `rathflow-cli` (day-to-day operations);
-- the MCP server it registers is provided by the CLI itself (`rathflow mcp serve`),
-  described below.
+- the `rathflow` CLI (distributed separately on PyPI / npm) is needed only for
+  **logging in** and for shell work. The plugin will not look for source or
+  deploy anything locally.
 
 ## Requirements
 
 - Codex installed;
-- the `rathflow` CLI installed and on `PATH` (`rathflow --help` works). The
-  plugin will not look for source or install the CLI for you;
-- a RathFlow account, or sign up first at <https://rathflow.lynwe.com/register>
-  (`rathflow auth register -e <email>` also works and logs you in on success);
+- this plugin installed (next section) — the MCP tools then work immediately;
+- a RathFlow account, or sign up first at <https://rathflow.lynwe.com/register>;
+- to authenticate: install the `rathflow` CLI and run `rathflow auth login -e
+  <email>` once in a terminal (or provide `RATHFLOW_TOKEN` to the server). MCP and
+  the CLI read the same config file;
 - network access to your RathFlow Gateway.
 
 ## Install
@@ -137,55 +140,41 @@ execute), it states the operation and asks for confirmation first.
 
 ## MCP
 
-The plugin's `.mcp.json` registers the MCP server that the CLI itself provides:
+The plugin bundles a stdio MCP server (`server/`, Python standard library only).
+`.mcp.json` starts it with `python3 -c '<bootstrap>'`, and the bootstrap locates
+the plugin's own copy via
+`$CODEX_HOME/plugins/cache/*/rathflow-codex-plugin/*/server/__main__.py` — nothing
+depends on `rathflow` being on `PATH`, so a fresh install works on the first
+session.
 
-```json
-{ "mcpServers": { "rathflow": { "command": "rathflow", "args": ["mcp", "serve"] } } }
-```
-
-The server lives in the `rathflow-cli` package, so this repository no longer
-ships an implementation of its own — which keeps the tool surface on the same
-endpoint table as the CLI.
-
-- 14 read tools out of the box (identity, projects, sessions, memory, sandboxes,
-  workflows, usage, plus endpoint discovery and an escape hatch);
-- 5 more write tools once `RATHFLOW_MCP_WRITE=1` is set in the server's
-  environment (create/archive session, write memory, create sandbox, run a
-  sandbox command); writes stay off by default;
+- 10 read tools out of the box (identity, projects, sessions, memory, sandboxes,
+  workflows, usage, endpoint discovery);
+- `rathflow_project_use` (local config only) is always visible; setting
+  `RATHFLOW_MCP_WRITE=1` in the server's environment additionally unlocks the write
+  endpoints reachable through `rathflow_api_call`, off by default;
 - endpoints without a named tool are reachable through `rathflow_endpoints` +
-  `rathflow_api_call` (the same escape hatch as `rathflow api <Key>`);
-- auth is the CLI's own config: run `rathflow auth login` once, and the server
-  refreshes the token as the session goes;
-- proxies: Codex spawns MCP servers with a **filtered** environment (core variables
-  plus the names listed in the plugin's `.mcp.json` `env_vars`). The plugin forwards
-  `ALL_PROXY` / `HTTP(S)_PROXY` / `NO_PROXY` in both cases, so the proxy must be set
-  in the environment Codex was started from — a proxy exported in some other
-  terminal never reaches the server;
+  `rathflow_api_call`;
+- auth is the same config file as the CLI (`~/.config/rathflow/config.json`,
+  relocatable with `RATHFLOW_CONFIG_DIR`). Log in once with the CLI; the server
+  refreshes the token itself;
+- proxies: the server speaks `http` and `socks5h` itself and normalizes
+  `socks://` / `socks4://` to `socks5h://`, so it needs neither the `[socks]` extra
+  nor `socksio`. Codex still spawns MCP servers with a **filtered** environment
+  (core variables plus the names in the plugin's `.mcp.json` `env_vars`), so the
+  proxy must be present in the environment Codex was started from;
 - it loads in a **new** session only, and `codex mcp list` shows whether it is
-  registered.
+  registered. When not authenticated, the tools return a clear instruction to run
+  `rathflow auth login` — never a hunt for source or a local deployment.
 
-Before the CLI is installed, the first session after adding the plugin **always**
-prints `⚠ MCP client for rathflow failed to start: MCP startup failed: No such
-file or directory (os error 2)`: Codex spawns MCP servers at session start, and at
-that moment `rathflow` is not on `PATH` yet. That is the expected ordering, not a
-broken plugin — it is not a reason to look for a source checkout or to install
-anything by hand, and it goes away once the CLI is installed and Codex is
-restarted. A `handshaking with MCP server failed` / `connection closed` / timeout
-*after* the CLI is installed is a real problem: quote it and investigate.
+## Known limits
 
-If `rathflow --version` is older than 0.1.5, or `rathflow mcp serve --help` says
-`No such command 'mcp'`, the command on `PATH` is a stale install (typically a
-hand-written wrapper, an old virtualenv entry point, or a pre-release dev build).
-Setup aligns it: install the released package, re-resolve `command -v rathflow`,
-and if the stale file still shadows the new one, move it to `<path>.bak-<timestamp>`
-and tell you which file moved. Never edit the virtualenv behind it.
-
-Known limit: `mcp serve` currently ships in the **Python** package only (the npm
-CLI has not been ported yet), so using MCP means installing the Python package
-(`uv tool install rathflow-cli`). On Windows make sure `rathflow.exe` is on
-`PATH`.
+- The launch command is `python3`, so the machine needs Python 3.9+ (Codex's own
+  plugin scaffolding scripts make the same assumption). On Windows, if only `py`
+  exists, change `command` in `.mcp.json` to `py`.
+- The bundled server and the CLI share the same tool surface but are **not the same
+  code**: endpoint changes in the CLI have to be mirrored here.
 
 ## License
 
-MIT — see `LICENSE`. This covers the plugin instructions and the experimental MCP
+MIT — see `LICENSE`. This covers the plugin instructions and the bundled MCP
 server in this repository, not the RathFlow service or CLI.

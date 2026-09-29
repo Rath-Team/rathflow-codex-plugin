@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.1.12
+
+- The MCP server is now bundled with the plugin. `codex` plugins cannot reference a
+  file inside their own package from `.mcp.json` (no placeholder expansion, no
+  plugin-root variable, and the server's cwd is the session directory), and the
+  old declaration — `command: "rathflow"` — required the CLI to already be on
+  `PATH` at session start. On a fresh machine that meant a startup failure, an
+  agent that went hunting for RathFlow, and a web search that lands on an
+  unrelated product ("Rath Finance"). `.mcp.json` now launches a stdio server that
+  ships in `server/`: `command: "python3"` plus a small inline bootstrap that
+  locates the plugin's own implementation under
+  `$CODEX_HOME/plugins/cache/*/rathflow-codex-plugin/*/server/`, and falls back to
+  an empty-but-valid server (never a startup failure) if that file is missing.
+- New `server/` package, Python standard library only: JSON-RPC 2.0 over stdio with
+  newline framing, protocol-version negotiation, `initialize` / `tools/list` /
+  `tools/call` / `ping`, stdout reserved for the protocol and diagnostics on
+  stderr; a hand-written HTTP transport with SOCKS5 and `socks://` normalization
+  (no `httpx`, no PySocks); the same config file and token refresh as the CLI.
+- Tool surface: 10 read tools plus `rathflow_project_use`; `rathflow_api_call`
+  writes only with `RATHFLOW_MCP_WRITE=1`. Not-authenticated responses point at
+  `rathflow auth login` and explicitly forbid hunting for source or deploying
+  locally.
+- Skills and both READMEs rewritten around this: the MCP tools need no install,
+  the CLI is needed only for login and shell work, and the "expected warning
+  before the CLI exists" section is gone because that warning no longer happens.
+
 ## 0.1.11
 
 - Version alignment for pre-existing CLI installs. A machine can already have a

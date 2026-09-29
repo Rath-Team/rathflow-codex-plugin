@@ -1,9 +1,13 @@
 {
   "mcpServers": {
     "rathflow": {
-      "command": "rathflow",
-      "args": ["mcp", "serve"],
+      "command": "python3",
+      "args": [
+        "-c",
+        "import glob, os, re, runpy, sys\nhome = os.environ.get(\"CODEX_HOME\") or os.path.join(os.path.expanduser(\"~\"), \".codex\")\nfound = glob.glob(os.path.join(home, \"plugins\", \"cache\", \"*\", \"rathflow-codex-plugin\", \"*\", \"server\", \"__main__.py\"))\n\ndef _ver(path):\n    return [int(n) for n in re.findall(r\"\\d+\", os.path.basename(os.path.dirname(path)))]\n\nif found:\n    runpy.run_path(max(found, key=_ver), run_name=\"__main__\")\nelse:\n    import json as _json\n\n    def _out(message):\n        sys.stdout.write(_json.dumps(message) + \"\\n\")\n        sys.stdout.flush()\n\n    for _line in sys.stdin:\n        _line = _line.strip()\n        if not _line:\n            continue\n        try:\n            _msg = _json.loads(_line)\n        except ValueError:\n            continue\n        if \"id\" not in _msg:\n            continue\n        _id = _msg[\"id\"]\n        _method = _msg.get(\"method\")\n        if _method == \"initialize\":\n            _out({\"jsonrpc\": \"2.0\", \"id\": _id, \"result\": {\n                \"protocolVersion\": \"2025-06-18\",\n                \"capabilities\": {\"tools\": {\"listChanged\": False}},\n                \"serverInfo\": {\"name\": \"rathflow\", \"version\": \"0\"},\n                \"instructions\": \"RathFlow plugin files are missing. Reinstall the plugin with: codex plugin add rathflow-codex-plugin@rathflow-marketplace\",\n            }})\n        elif _method in (\"tools/list\", \"resources/list\"):\n            _out({\"jsonrpc\": \"2.0\", \"id\": _id, \"result\": {\"tools\": [], \"resources\": []}})\n        elif _method == \"ping\":\n            _out({\"jsonrpc\": \"2.0\", \"id\": _id, \"result\": {}})\n        else:\n            _out({\"jsonrpc\": \"2.0\", \"id\": _id, \"error\": {\"code\": -32601, \"message\": \"not implemented\"}})\n"
+      ],
       "env_vars": [
+        "CODEX_HOME",
         "RATHFLOW_BASE_URL",
         "RATHFLOW_PROJECT",
         "RATHFLOW_TOKEN",

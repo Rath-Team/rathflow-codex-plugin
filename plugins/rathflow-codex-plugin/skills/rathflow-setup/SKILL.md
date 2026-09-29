@@ -7,30 +7,23 @@ description: Set up or troubleshoot RathFlow for Codex when the user asks to ins
 
 RathFlow (for the record, in case the user asks) is a hosted platform for AI coding agents: sessions
 and event streams, agent definitions and runs, sandboxes, project memory, assets and workflows, plus
-usage and billing. The web app is <https://rathflow.lynwe.com>; the plugin reaches it through the
-`rathflow` CLI.
+usage and billing. The web app is <https://rathflow.lynwe.com>.
 
-Drive the user to a working `rathflow` CLI connection, and do every step yourself that does not
-need a human. The only step that truly needs the user is the password prompt. The plugin ships
-instructions only: it does not bundle the CLI, does not bundle an MCP server, and does not start a
-Gateway. The MCP server this plugin registers is `rathflow mcp serve` — a subcommand of the
-published CLI.
+## How this plugin reaches RathFlow
 
-## Expect one warning before the CLI exists
+Two doors, and they are independent:
 
-Codex spawns a plugin's MCP servers at session start, so the first session after installing the
-plugin — while `rathflow` is still missing — always shows:
+- **MCP tools (bundled, zero install).** The plugin ships its own stdio MCP server under `server/`
+  — a Python program that uses only the standard library. `.mcp.json` starts it with
+  `python3 -c '<bootstrap>'`, and the bootstrap locates the plugin's own copy by globbing
+  `$CODEX_HOME/plugins/cache/*/rathflow-codex-plugin/*/server/__main__.py`. Nothing depends on what
+  is on `PATH`, so **the tools work on a fresh machine with nothing installed**. It reads the same
+  config file as the CLI (`~/.config/rathflow/config.json`), so one login serves both.
+- **The `rathflow` CLI (published on PyPI and npm).** Needed for the **login step** (a password
+  prompt belongs in a terminal, never in a chat) and useful for shell work.
 
-```text
-⚠ MCP client for `rathflow` failed to start: MCP startup failed: No such file or directory (os error 2)
-```
-
-That is the expected ordering, not a broken plugin, and never a reason to look for a local RathFlow
-checkout or install anything by hand: `.mcp.json` runs the published CLI's `rathflow mcp serve`, and
-installing that CLI is what you are about to do (§2). Tell the user this once, up front, before they
-ask — then finish with the restart step in §8. A *different* MCP error after the CLI is installed
-(`handshaking with MCP server failed`, `connection closed`, a timeout) is real: quote it and
-investigate.
+If the MCP tools say 未登录 / not authenticated, the user runs `rathflow auth login` in their own
+terminal — that is the one human step. Everything else you do yourself.
 
 ## 0. Work out the network situation yourself (do not ask the user)
 
@@ -86,53 +79,42 @@ once with `-c http.version=HTTP/1.1` before concluding anything.
 Never edit the user's `~/.gitconfig`, shell rc, or system proxy settings as a side effect.
 Per-command environment is enough, and it lets you tell the user exactly what you set.
 
-## 1. Check whether the CLI is installed
+## 1. Check the MCP tools first (no install required)
+
+Call `rathflow_whoami` through the MCP tool surface. Three outcomes:
+
+- it answers with a login and a project list → the tools work; go to §5 only if you also need the CLI;
+- it answers 未登录 / not authenticated → the tools work, the user simply has no credentials yet: go
+  to §5;
+- no `mcp__rathflow__*` tool is exposed at all, or the session printed
+  `MCP client for \`rathflow\` failed to start` → the plugin's own server did not load. That is a
+  plugin-installation problem, **not** a CLI problem: reinstall the plugin (see "Installing the
+  plugin itself") and start a fresh session. Quote the exact warning instead of paraphrasing it.
+
+MCP servers start once, at session start. Installing something later in the same session does not
+bring them up — a restart is what does.
+
+### If you also need the CLI
+
+Only the login step truly requires it. Treat the CLI as a released product: its installed command is
+the only supported interface. Do **not** search the filesystem for RathFlow source or a project
+checkout, do not look for a virtualenv, and do not build or install RathFlow from a local source
+tree.
 
 ```bash
 command -v rathflow
-rathflow --help
-rathflow mcp serve --help    # 工具面走 MCP 时必须有；缺它说明 CLI 太旧
+rathflow --version
 ```
 
-Treat the CLI as a released product: its installed command is the only supported interface. Do
-**not** search the filesystem for RathFlow source or a project checkout, do not look for a
-virtualenv, and do not build or install RathFlow from a local source tree.
+A stale `rathflow` left over from an earlier era (a hand-written wrapper, a venv entry point) will
+answer `command -v` while behaving differently. If `rathflow --version` is older than 0.1.5, or
+`rathflow --help` has no `auth` command, align it per §2 instead of reporting a blocker.
 
-### Align the version: an old `rathflow` on `PATH` is not "installed"
-
-Real machines often carry a stale `rathflow` from an earlier era — a hand-written wrapper, a
-virtualenv entry point, something a previous project left behind. It answers `command -v rathflow`
-and `rathflow --help`, so a naive check calls it installed, but it is not the published CLI and
-`rathflow mcp serve` answers `No such command 'mcp'`. That is exactly why the plugin's MCP server
-fails to start on such a machine. Detect it:
-
-```bash
-command -v rathflow          # remember this path
-rathflow --version           # must be 0.1.5 or newer
-rathflow mcp --help          # "No such command" / unknown command ⇒ stale
-```
-
-When either check fails, align it instead of reporting a blocker — install the released package,
-then **re-resolve** the command:
-
-```bash
-uv tool install --force --refresh 'rathflow-cli[socks]'   # or pipx install --force … / python3 -m pip install --user --upgrade …
-command -v rathflow
-rathflow --version && rathflow mcp serve --help
-```
-
-If `command -v rathflow` still resolves to the old path, that file is **shadowing** the fresh
-install because its directory comes first on `PATH`. Fix the shadowing rather than living with it:
-move the stale file aside (`mv <path> <path>.bak-$(date +%s)`), confirm the released one now wins,
-and tell the user which file you moved and why. Only ever touch the `rathflow` command that `PATH`
-resolves to — never edit a virtualenv's `site-packages`, never patch a checkout, never
-`pip install -e`. State which version you ended on.
-
-## 2. If the CLI is missing, install it from a public registry and continue
+## 2. Install the CLI (only needed for login and shell work)
 
 `rathflow-cli` is a normal package on **PyPI** (Python 3.10+) and **npm** (Node 20+); both ship the
-same `rathflow` command, so installing it is part of doing the setup — do it yourself instead of
-asking the user to. Pick the first option that works on this machine:
+same `rathflow` command. Install it yourself instead of asking the user to. Pick the first option
+that works on this machine:
 
 ```bash
 uv tool install 'rathflow-cli[socks]'            # Python 首选（uv 只是安装器，包来自 PyPI）
@@ -169,25 +151,22 @@ the previous release right after a new one ships:
 
 ```bash
 rathflow --version          # expect 0.1.5 or newer
-rathflow mcp serve --help   # the MCP subcommand must exist
 ```
 
-If the version is older than that (or `mcp serve` is missing), force a refresh and retry:
-`uv tool install --force --refresh 'rathflow-cli[socks]'`, `pipx install --force 'rathflow-cli[socks]'`,
-or `python3 -m pip install --user --upgrade 'rathflow-cli[socks]'`.
+If it is older, force a refresh and retry (`uv tool install --force --refresh 'rathflow-cli[socks]'`,
+`pipx install --force 'rathflow-cli[socks]'`, or
+`python3 -m pip install --user --upgrade 'rathflow-cli[socks]'`). Also confirm the login subcommand
+exists: `rathflow auth --help`.
 
-MCP needs `rathflow-cli >= 0.1.4` (`>= 0.1.5` on a machine whose `ALL_PROXY` uses `socks://…`, since
-0.1.5 normalizes that scheme itself) **and** currently only ships in the Python package. If the user
-wants the MCP tools (rather than just the skills) and `mcp serve --help` fails, install the Python
-package even if the npm CLI is already present, and mention that the two must not both be first on
-`PATH`.
+The bundled MCP server does **not** inherit these proxy caveats: it rewrites `socks://` itself and
+speaks SOCKS5 through the standard library, so it needs neither the `[socks]` extra nor `socksio`.
 
-One more thing to know before you blame the CLI: Codex spawns MCP servers with a **filtered**
-environment — core variables plus the names in the plugin's `.mcp.json` `env_vars`. This plugin
-forwards the proxy variables there (`ALL_PROXY`, `HTTPS_PROXY`, `HTTP_PROXY` and lowercase, plus
-`NO_PROXY`), so a proxy has to be present in the environment Codex itself was started from. If the
-MCP server cannot reach the Gateway while the CLI in your shell can, that difference is the reason:
-restart Codex from the shell that has the proxy set. Nothing outside `env_vars` reaches the server.
+One environment fact still matters for MCP: Codex spawns MCP servers with a **filtered** environment
+— core variables plus the names listed in the plugin's `.mcp.json` `env_vars`. This plugin forwards
+the proxy variables (`ALL_PROXY`, `HTTPS_PROXY`, `HTTP_PROXY` and lowercase, plus `NO_PROXY`), so a
+proxy must be present in the environment Codex itself was started from. If the MCP server cannot
+reach the Gateway while the CLI in your shell can, restart Codex from the shell that has the proxy
+set. Nothing outside `env_vars` reaches the server.
 
 Two hard rules for this step:
 
@@ -246,10 +225,10 @@ rathflow auth login -e <their-email>
 ```
 
 Add a `RATHFLOW_CONFIG_DIR=<dir> ` prefix only when this session's config directory is not the
-default `~/.config/rathflow`, and say why the prefix is there. Likewise, if `rathflow` is not on the
-user's `PATH` (a plain `uv tool install` puts it in `~/.local/bin`), tell them to run
-`uv tool update-shell` so the command works in their terminal **and** in the Codex session that will
-launch the MCP server.
+default `~/.config/rathflow`, and say why the prefix is there. If `rathflow` is not on the user's
+`PATH` (a plain `uv tool install` puts it in `~/.local/bin`), tell them to run `uv tool update-shell`
+so the command works in their terminal. The bundled MCP server is unaffected either way — it reads
+the config file directly.
 
 Rules for this step:
 
@@ -270,42 +249,37 @@ Keep an existing selection. If none is set, ask which accessible project to use,
 
 ## 7. Verify and report
 
-Run one read-only command such as `rathflow session list`, then report: CLI availability, effective
-Gateway, profile, config file/dir, login state, project scope, MCP status, and any remaining blocker.
-Do not create a session or mutate data just to verify.
+Prefer calling the MCP tools: they need no CLI. If you also installed the CLI, one read-only command
+such as `rathflow session list` is enough. Make sure `rathflow auth --help` exists, then report MCP
+tool status, login state, effective Gateway, profile, config file/dir, project scope, and any
+remaining blocker. Do not create a session or mutate data just to verify.
 
-**Registered is not the same as working.** MCP servers are spawned once, at session start, so if you
-installed or upgraded the CLI during this session the running session's server already failed to
-start (its `exec` of `rathflow` happened before the binary existed). Never report MCP as ready in
-that case. Use these exact slots so nothing gets paraphrased away:
+Use these slots so nothing gets paraphrased away:
 
 ```text
-MCP       需要重启 Codex 才会生效 —— 本次会话启动时 rathflow 还不存在
-下一步    1) 重启 Codex  2) 让工具出现  3) 再跑一次验证
+MCP       已可用 / 未加载（插件没装好，见 §1）
+登录      已登录 <email> / 未登录 —— 下一步由用户在终端跑 rathflow auth login -e <email>
+网关      <base_url>
+项目      <project_id 或 未设置>
 ```
 
-Only write `MCP  已可用` when the tools were already live in this session.
+Only write `MCP  已可用` when a tool actually answered in this session. Credentials do not need a
+restart: after the user logs in, retry the tool in the same session.
 
 ## 8. MCP: what to tell the user
 
-The plugin's `.mcp.json` registers `rathflow mcp serve`, and Codex only loads MCP servers at session
-start. So:
-
-- the tools appear in a **new** session. If the CLI was installed or upgraded in this session, the
-  server in the running session already failed to start: restart Codex, then `codex mcp list` and a
-  first tool call are the real proof;
-- if the session that installed the CLI greeted the user with `No such file or directory (os error 2)`
-  for `rathflow`, that message was about *this* ordering and nothing else — say so plainly instead of
-  letting it read as a defect, and repeat the restart step;
-- do not report MCP as working on the strength of the registration alone, and do not paper over a
-  startup failure — quote it;
-- writes are off unless `RATHFLOW_MCP_WRITE=1` is set in the server's environment — do not turn it
-  on unasked;
-- `codex mcp list` shows whether the server is registered. If it is not listed, the plugin is not
-  installed for this Codex home; run the marketplace/add steps below.
-
-When an MCP tool call fails with "not authenticated", the fix is the same as the CLI's: the user runs
-`rathflow auth login` in their own terminal, then the tool can be retried in the same session.
+- The server is bundled with the plugin and starts with the session. Installing the plugin *is* the
+  install step — there is nothing to download and no restart caused by a missing CLI.
+- The tools read the same config file as the CLI, so the login the user performs once serves both.
+  A tool that answers "not authenticated" is fixed by `rathflow auth login` in the user's terminal,
+  then a retry — no restart.
+- Writes are off unless `RATHFLOW_MCP_WRITE=1` is present in the server's environment (the value
+  comes from the environment Codex was started with, because `env_vars` only forwards existing
+  variables). Do not turn it on unasked.
+- If no `mcp__rathflow__*` tool appears at all, the plugin is not installed for this Codex home —
+  run the marketplace/add steps below and start a fresh session.
+- Never tell the user to find, clone, or build RathFlow to make MCP work. That path does not exist,
+  and "RathFlow MCP" search results point at an unrelated product.
 
 ## Installing the plugin itself
 
@@ -328,7 +302,11 @@ skill instead of repeating setup.
 
 ## Never do this
 
-- Never search the filesystem for a RathFlow checkout, and never build or run RathFlow from source.
+- Never search the filesystem (or the internet) for RathFlow source, never clone it, never build or
+  deploy it, never start a Gateway. A web search for "RathFlow MCP" surfaces **Rath Finance**, an
+  unrelated product — that is not us.
+- Never treat a missing CLI as a broken plugin: the bundled MCP tools do not need it, only login
+  does.
 - Never "fix" a stale `rathflow` by editing the virtualenv, checkout or shell function it points at.
   Align the command on `PATH` (upgrade, then move the shadowing file aside) and re-run the version
   checks; report the path you resolved and the file you moved.
