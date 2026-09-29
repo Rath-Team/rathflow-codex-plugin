@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.9
+
+- The setup skill now verifies the installed CLI version instead of trusting the
+  installer. A zero-knowledge run right after the `rathflow-cli` 0.1.5 release got
+  `0.1.4` from a warm uv index cache, so the new `socks://` normalization was absent
+  even though the install "succeeded". Step 2 ends with `rathflow --version` /
+  `mcp serve --help` and a refresh-and-retry command for stale resolutions.
+
 ## 0.1.8
 
 - Proxy handling is now a first-class part of setup instead of an environment assumption. Codex

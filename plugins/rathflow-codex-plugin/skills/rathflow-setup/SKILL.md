@@ -118,6 +118,18 @@ Afterwards make sure the command is reachable (`uv tool update-shell`, `~/.local
 the npm global bin directory from `npm prefix -g`), re-run step 1, and continue with step 3. Only if
 every install path fails (no network, no Python, no Node) do you stop and report the error.
 
+Then prove you actually got a current build, because a warm package-index cache can quietly hand you
+the previous release right after a new one ships:
+
+```bash
+rathflow --version          # expect 0.1.5 or newer
+rathflow mcp serve --help   # the MCP subcommand must exist
+```
+
+If the version is older than that (or `mcp serve` is missing), force a refresh and retry:
+`uv tool install --force --refresh 'rathflow-cli[socks]'`, `pipx install --force 'rathflow-cli[socks]'`,
+or `python3 -m pip install --user --upgrade 'rathflow-cli[socks]'`.
+
 MCP needs `rathflow-cli >= 0.1.4` (`>= 0.1.5` on a machine whose `ALL_PROXY` uses `socks://…`, since
 0.1.5 normalizes that scheme itself) **and** currently only ships in the Python package. If the user
 wants the MCP tools (rather than just the skills) and `mcp serve --help` fails, install the Python
