@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.1.8
+
+- Proxy handling is now a first-class part of setup instead of an environment assumption. Codex
+  spawns MCP servers with a **filtered** environment (core variables + the plugin's `env_vars`), so
+  the `.mcp.json` now forwards `ALL_PROXY` / `HTTP(S)_PROXY` / `NO_PROXY` (both cases). Without
+  this a proxied machine's MCP server silently ran with no proxy while the CLI in the same shell
+  worked. Missing entries are simply not set, so unproxied machines are unaffected.
+  `rathflow-setup` gains a "work out the network yourself" step: detect the machine's proxy,
+  normalize `socks://…` (which git, curl and httpx all reject) to `socks5h://…`, probe PyPI and
+  GitHub with and without the proxy, and fall back to the usual local Clash ports instead of
+  asking the user for a URL. It also corrects a wrong claim: the `[socks]` extra fixes
+  `socks5://…` (missing `socksio`), **not** `socks://…` (bad scheme) — that one needs the scheme
+  rewritten. `Error in the HTTP2 framing layer` is documented as a retry-with-HTTP/1.1 symptom,
+  and the skill is explicit that global git config / shell rc must not be edited as a side effect.
+  MCP needs `rathflow-cli >= 0.1.5` for the `socks://` rewrite (0.1.4 needs a hand-normalized
+  `ALL_PROXY`).
+- `scripts/naive-install.sh` follows the same rules: it inherits the machine's proxy by default,
+  adds `--proxy <url|auto>` / `--no-proxy` / `--http1`, normalizes the scheme, retries a failed
+  clone once over HTTP/1.1, health-checks PyPI and GitHub before installing, and prints the exact
+  proxy alternatives when the marketplace clone keeps failing.
+
 ## 0.1.7
 
 - The setup skill now installs `rathflow-cli[socks]` on the Python paths. Without

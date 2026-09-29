@@ -57,9 +57,10 @@ handing you a manual configuration guide or asking the same question twice:
 - **Checks the CLI** with `command -v rathflow` / `rathflow --help` only. It does
   **not** search the filesystem for source, checkouts, or virtualenvs.
 - **Installs it when missing**: `rathflow-cli` is a normal package on PyPI and on
-  npm, so Codex runs `uv tool install rathflow-cli` (falling back to `pipx`,
-  `pip install --user`, then `npm install -g`) itself. The installers only fetch
-  from a registry — never a local source tree. It stops only if every path fails.
+  npm, so Codex runs `uv tool install 'rathflow-cli[socks]'` (falling back to
+  `pipx`, `pip install --user`, then `npm install -g`) itself. The installers only
+  fetch from a registry — never a local source tree. It stops only if every path
+  fails.
 - **Reads the effective config** (`config show` / `config list`) and explains the
   precedence: flag > environment (`RATHFLOW_BASE_URL`, `RATHFLOW_PROJECT`,
   `RATHFLOW_TOKEN`) > profile > default `https://rathflow.lynwe.com`, plus where
@@ -79,11 +80,18 @@ handing you a manual configuration guide or asking the same question twice:
 [npmjs.com/package/rathflow-cli](https://www.npmjs.com/package/rathflow-cli)):
 
 ```bash
-uv tool install rathflow-cli                  # preferred when uv exists (Python 3.10+)
-pipx install rathflow-cli                     # otherwise
-python3 -m pip install --user rathflow-cli    # fallback
+uv tool install 'rathflow-cli[socks]'         # preferred when uv exists (Python 3.10+)
+pipx install 'rathflow-cli[socks]'            # otherwise
+python3 -m pip install --user 'rathflow-cli[socks]'   # fallback
 npm install -g rathflow-cli                   # equivalent Node implementation (Node 20+)
 ```
+
+Prefer the `[socks]` extra on the Python paths: many desktop proxies (Clash and
+friends) export `ALL_PROXY=socks://…`, and `httpx` needs `socksio` to speak SOCKS.
+CLI ≥ 0.1.5 rewrites `socks://` to `socks5h://` on its own, so you do not have to
+edit environment variables by hand. The proxy has to be set in the shell that
+started Codex, because the MCP server only inherits the proxy variables the plugin
+forwards (see "MCP" below).
 
 You normally don't have to do this by hand: Codex installs the CLI when it is
 missing. The two packages are implementations of one CLI — same commands, options,
@@ -148,6 +156,11 @@ endpoint table as the CLI.
   `rathflow_api_call` (the same escape hatch as `rathflow api <Key>`);
 - auth is the CLI's own config: run `rathflow auth login` once, and the server
   refreshes the token as the session goes;
+- proxies: Codex spawns MCP servers with a **filtered** environment (core variables
+  plus the names listed in the plugin's `.mcp.json` `env_vars`). The plugin forwards
+  `ALL_PROXY` / `HTTP(S)_PROXY` / `NO_PROXY` in both cases, so the proxy must be set
+  in the environment Codex was started from — a proxy exported in some other
+  terminal never reaches the server;
 - it loads in a **new** session only, and `codex mcp list` shows whether it is
   registered.
 

@@ -9,6 +9,14 @@
         "RATHFLOW_TOKEN",
         "RATHFLOW_CONFIG_DIR",
         "RATHFLOW_MCP_WRITE",
+        "ALL_PROXY",
+        "all_proxy",
+        "HTTPS_PROXY",
+        "https_proxy",
+        "HTTP_PROXY",
+        "http_proxy",
+        "NO_PROXY",
+        "no_proxy",
         "HOME"
       ]
     }

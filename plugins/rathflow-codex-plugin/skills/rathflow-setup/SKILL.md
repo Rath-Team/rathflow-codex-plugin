@@ -16,6 +16,60 @@ instructions only: it does not bundle the CLI, does not bundle an MCP server, an
 Gateway. The MCP server this plugin registers is `rathflow mcp serve` — a subcommand of the
 published CLI.
 
+## 0. Work out the network situation yourself (do not ask the user)
+
+Never ask "do you use a proxy?". A new user does not know, and the answer only changes *how* you
+install, not *what*. A desktop proxy is a normal environment, not an error: detect it, adapt to
+it, and say what you set. Both outcomes must work — direct connection and proxied connection.
+
+```bash
+env | grep -iE '^(all_proxy|https?_proxy)=' || echo 'no proxy variables set'
+```
+
+If that prints something, the machine uses a proxy. Normalize the scheme before handing it to any
+tool: Clash and friends export `socks://…`, which **git, curl and httpx all reject**.
+
+| seen | use with git / curl / httpx |
+| --- | --- |
+| `socks://host:port` | `socks5h://host:port` |
+| `socks4://host:port` | `socks5h://host:port` (httpx has no SOCKS4; Clash's port speaks SOCKS5) |
+| `http://…`, `socks5://…`, `socks5h://…` | unchanged |
+
+Decide with two short probes — a timeout is the signal, not an error:
+
+```bash
+curl -s -o /dev/null -m 8 -w '%{http_code}\n' https://pypi.org/simple/rathflow-cli/
+curl -s -o /dev/null -m 8 -w '%{http_code}\n' https://github.com/Rath-Team/rathflow-codex-plugin.git
+```
+
+- `200`/`3xx` → that path works as is.
+- timeout / `000` with a proxy set → repeat the probe with `--proxy <normalized-url>`; if that
+  answers, use the proxy for that path.
+- timeout with no proxy set → the user may still run a local proxy (Clash's usual ports are
+  `127.0.0.1:7897`, `7890`, `1080`, `8888`). Probe those and offer what answers; do not ask the
+  user for a URL you can find yourself.
+
+Apply the result per command, never by editing global config:
+
+```bash
+# git (clone, marketplace add) — per-command env, never `git config --global`
+GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=http.proxy GIT_CONFIG_VALUE_0=<url> \
+GIT_CONFIG_KEY_1=https.proxy GIT_CONFIG_VALUE_1=<url> \
+git -c http.version=HTTP/1.1 clone https://github.com/Rath-Team/rathflow-codex-plugin.git
+
+# pip / uv — they read the proxy variables from the same command
+HTTPS_PROXY=<url> HTTP_PROXY=<url> uv tool install 'rathflow-cli[socks]'
+
+# the CLI itself
+ALL_PROXY=socks5://127.0.0.1:7897 rathflow whoami
+```
+
+`Error in the HTTP2 framing layer` from a clone is a flaky-proxy symptom, not an auth error: retry
+once with `-c http.version=HTTP/1.1` before concluding anything.
+
+Never edit the user's `~/.gitconfig`, shell rc, or system proxy settings as a side effect.
+Per-command environment is enough, and it lets you tell the user exactly what you set.
+
 ## 1. Check whether the CLI is installed
 
 ```bash
@@ -41,12 +95,18 @@ python3 -m pip install --user 'rathflow-cli[socks]'   # 兜底
 npm install -g rathflow-cli                      # 有 Node 20+ 时等价
 ```
 
-Install the `[socks]` extra on the Python paths. It costs one small dependency and prevents a hard
-failure: many desktop proxy setups (Clash and friends) export `ALL_PROXY=socks://…`, which makes
-`httpx` raise a bare `ValueError: Unknown scheme for proxy URL` on the **first** CLI call — a raw
-traceback with no hint about the proxy. With the extra installed the same command just works. If you
-skip it, you must instead have the user clear `ALL_PROXY` in every shell, including the one Codex
-launches the MCP server from.
+Install the `[socks]` extra on the Python paths. `httpx` (the HTTP client inside the CLI) only
+understands `socks5://`/`socks5h://`, and two separate things go wrong on a Clash-style desktop:
+
+- `ALL_PROXY=socks://…` is rejected outright with `ValueError: Unknown scheme for proxy URL` — the
+  extra does **not** help here, only rewriting the scheme to `socks5://` does (§0);
+- `ALL_PROXY=socks5://…` without `socksio` fails with `ImportError: Using SOCKS proxy, but the
+  'socksio' package is not installed` — the extra fixes this one.
+
+So install the extra **and** normalize the scheme on every CLI invocation, e.g.
+`ALL_PROXY=socks5://127.0.0.1:7897 rathflow whoami`. Do not rewrite the user's shell rc. Remember
+that Codex launches the MCP server with the environment it was started with, so a bad
+`ALL_PROXY` there needs fixing in that environment, not just in your tool calls.
 
 The package name is exactly `rathflow-cli` on both registries
 (<https://pypi.org/project/rathflow-cli/>, <https://www.npmjs.com/package/rathflow-cli>). They are
@@ -58,10 +118,18 @@ Afterwards make sure the command is reachable (`uv tool update-shell`, `~/.local
 the npm global bin directory from `npm prefix -g`), re-run step 1, and continue with step 3. Only if
 every install path fails (no network, no Python, no Node) do you stop and report the error.
 
-MCP needs `rathflow-cli >= 0.1.4` **and** currently only ships in the Python package. If the user
+MCP needs `rathflow-cli >= 0.1.4` (`>= 0.1.5` on a machine whose `ALL_PROXY` uses `socks://…`, since
+0.1.5 normalizes that scheme itself) **and** currently only ships in the Python package. If the user
 wants the MCP tools (rather than just the skills) and `mcp serve --help` fails, install the Python
 package even if the npm CLI is already present, and mention that the two must not both be first on
 `PATH`.
+
+One more thing to know before you blame the CLI: Codex spawns MCP servers with a **filtered**
+environment — core variables plus the names in the plugin's `.mcp.json` `env_vars`. This plugin
+forwards the proxy variables there (`ALL_PROXY`, `HTTPS_PROXY`, `HTTP_PROXY` and lowercase, plus
+`NO_PROXY`), so a proxy has to be present in the environment Codex itself was started from. If the
+MCP server cannot reach the Gateway while the CLI in your shell can, that difference is the reason:
+restart Codex from the shell that has the proxy set. Nothing outside `env_vars` reaches the server.
 
 Two hard rules for this step:
 
@@ -183,8 +251,16 @@ When an MCP tool call fails with "not authenticated", the fix is the same as the
 Plugin installation is a terminal step, not something this skill can perform:
 `codex plugin marketplace add <repo>` then `codex plugin add rathflow-codex-plugin@rathflow-marketplace`.
 Plugin skills only load in a **new** Codex session, so install first, then start a fresh session.
-If the marketplace clone fails because the repo needs credentials, use the SSH source:
-`codex plugin marketplace add ssh://git@github.com/Rath-Team/rathflow-codex-plugin.git`.
+
+If the marketplace clone fails, diagnose in this order:
+
+1. **Network/proxy** — the common cause. Follow §0, retry with the normalized proxy, and on
+   `HTTP2 framing layer` add `-c http.version=HTTP/1.1`.
+2. **Credentials** — then try the SSH source:
+   `codex plugin marketplace add ssh://git@github.com/Rath-Team/rathflow-codex-plugin.git`.
+3. **Local working tree** — only when the user is a developer testing their own checkout
+   (`codex plugin marketplace add <absolute-path>`). Never tell a new user to clone the repo, and
+   never present a local checkout as a way to install the released plugin.
 
 If the CLI is already configured and the user only asks about operations, use the `rathflow-cli`
 skill instead of repeating setup.
@@ -194,3 +270,6 @@ skill instead of repeating setup.
 - Never search the filesystem for a RathFlow checkout, and never build or run RathFlow from source.
 - Never start a Gateway.
 - Never install an MCP server from anywhere except the published `rathflow-cli` package.
+- Never edit the user's global git config, shell rc, or system proxy settings; pass proxy and
+  `http.version` per command. Never tell the user their network is broken without first probing it,
+  and never leave `socks://…` un-normalized when you do use a proxy.

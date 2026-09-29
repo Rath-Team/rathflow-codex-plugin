@@ -43,12 +43,20 @@ account -- installs the plugin, and optionally drives a Codex turn through it:
 scripts/naive-install.sh                       # prepare, print how to enter
 scripts/naive-install.sh --run                 # prepare, then open a session
 scripts/naive-install.sh --local . --prompt "我想试试 RathFlow" --assert
+scripts/naive-install.sh --proxy socks5h://127.0.0.1:7897   # force a proxy
+scripts/naive-install.sh --proxy auto                        # probe local proxy ports
+scripts/naive-install.sh --no-proxy                          # force a direct connection
 ```
 
 `--local` points the marketplace at a working tree, so skill changes can be checked
 before they are pushed. `--assert` fails the run when the agent went looking for
 source or never told the user how to get an account. The environment is a temp
 directory: delete it and nothing is left behind.
+
+By default the run carries over whatever `*_PROXY` the machine already exports, because
+that is what a real user has. `socks://` is normalized to `socks5h://` (git and httpx
+reject the short form), a failed clone is retried once with `http.version=HTTP/1.1`, and
+the effective proxy is printed in the `2.5/4` health check plus pinned into `env.sh`.
 
 ## Iterate on a local install
 

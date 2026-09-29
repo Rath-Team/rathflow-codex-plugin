@@ -57,13 +57,15 @@ Codex 会使用 `rathflow-setup` Skill 逐步引导；登录密码需要由你�
 **`rathflow-cli` 已发布到 PyPI 和 npm**（[pypi.org/project/rathflow-cli](https://pypi.org/project/rathflow-cli/)、[npmjs.com/package/rathflow-cli](https://www.npmjs.com/package/rathflow-cli)）：正常情况你不用手动做什么，Codex 会在缺 CLI 时自己装。想手动装的话，任选一种：
 
 ```bash
-uv tool install rathflow-cli                  # 有 uv 时首选（Python 3.10+）
-pipx install rathflow-cli                     # 没有 uv
-python3 -m pip install --user rathflow-cli     # 兜底
+uv tool install 'rathflow-cli[socks]'         # 有 uv 时首选（Python 3.10+）
+pipx install 'rathflow-cli[socks]'            # 没有 uv
+python3 -m pip install --user 'rathflow-cli[socks]'   # 兜底
 npm install -g rathflow-cli                   # 等价的 Node 实现（Node 20+）
 ```
 
 两个包是同一个 CLI 的两套实现：命令、选项、输出、退出码和配置文件都一致。**只全局装一个**——两边都提供名为 `rathflow` 的命令，装两个会互相覆盖。
+
+Python 版建议带 `[socks]` extra：很多桌面代理（Clash 等）会导出 `ALL_PROXY=socks://…`，`httpx` 需要 `socksio` 才能走 SOCKS；CLI ≥ 0.1.5 会把 `socks://` 自动改写成 `socks5h://`，不用你手工改环境变量。**代理要设在启动 Codex 的那个 shell 里**，MCP server 只继承插件转发的那几个代理变量（见「MCP」一节）。
 
 装完确认命令可见（`~/.local/bin` 需在 `PATH` 上，或执行一次 `uv tool update-shell`；npm 全局 bin 目录见 `npm prefix -g`）：
 
@@ -127,6 +129,7 @@ Codex 应该调用 `rathflow session list` 这类 CLI 命令，而不是绕过 C
 - 在 server 的环境里设 `RATHFLOW_MCP_WRITE=1` 会再多 5 个写工具（建会话、归档、写记忆、建沙箱、沙箱里执行命令），默认关闭；
 - 具名工具没覆盖的端点，用 `rathflow_endpoints` 查 key，再走 `rathflow_api_call`（等价 `rathflow api <Key>`）；
 - 鉴权与 CLI 同一份配置：先在终端跑一次 `rathflow auth login`，token 过期时 server 会自己续期；
+- 代理：Codex 启动 MCP server 时会**过滤环境变量**（只保留核心变量 + 插件 `.mcp.json` 里 `env_vars` 列出的名字）。插件已转发 `ALL_PROXY` / `HTTP(S)_PROXY` / `NO_PROXY`（大小写都算），所以代理必须设在启动 Codex 的那个 shell 里；只导出在别的终端里的代理不会传进来。
 - 只在**新会话**加载，`codex mcp list` 可确认注册状态。
 
 已知限制：`mcp serve` 目前只在 **Python 版** CLI 里（npm 版尚未移植），所以要用 MCP 就得装 Python 包（`uv tool install rathflow-cli`）。Windows 上请确认 `rathflow.exe` 在 `PATH` 上。

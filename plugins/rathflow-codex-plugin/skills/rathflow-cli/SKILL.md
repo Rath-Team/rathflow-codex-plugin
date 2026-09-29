@@ -20,6 +20,10 @@ Use the local `rathflow` command as the interface to RathFlow. The CLI is an HTT
   `rathflow-setup` skill before attempting operations.
 - If authentication is missing (`rathflow whoami` exits 2 with `未登录`), ask the user to run
   `rathflow auth login -e <email>` in their own terminal.
+- If the CLI dies with `ValueError: Unknown scheme for proxy URL`, the environment exports a
+  `socks://…` proxy that httpx cannot parse — normalize it for this command
+  (`ALL_PROXY=socks5://127.0.0.1:7897 rathflow …`) instead of hunting for source; see
+  `rathflow-setup` §0. `ImportError: … 'socksio' …` means the `[socks]` extra is missing.
 - Do not print, echo, or include access tokens in responses.
 
 ## Command Selection
