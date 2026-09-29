@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.10
+
+- The first MCP warning is now documented as expected instead of left to look
+  like a defect. Codex spawns a plugin's MCP servers at session start, so the
+  first session after installing the plugin — before the CLI exists — always
+  reports ``MCP client for `rathflow` failed to start: … No such file or
+  directory (os error 2)``. `rathflow-setup` gains a short section on this, the
+  agent is told to pre-empt it instead of letting the user discover it, and both
+  READMEs explain that it clears after the CLI is installed and Codex restarted.
+  A different failure once the CLI *is* installed (handshake failure, connection
+  closed, timeout) stays a real problem to quote and debug.
+
 ## 0.1.9
 
 - The setup skill now verifies the installed CLI version instead of trusting the

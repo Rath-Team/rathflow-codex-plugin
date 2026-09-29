@@ -132,6 +132,8 @@ Codex 应该调用 `rathflow session list` 这类 CLI 命令，而不是绕过 C
 - 代理：Codex 启动 MCP server 时会**过滤环境变量**（只保留核心变量 + 插件 `.mcp.json` 里 `env_vars` 列出的名字）。插件已转发 `ALL_PROXY` / `HTTP(S)_PROXY` / `NO_PROXY`（大小写都算），所以代理必须设在启动 Codex 的那个 shell 里；只导出在别的终端里的代理不会传进来。
 - 只在**新会话**加载，`codex mcp list` 可确认注册状态。
 
+装插件、装 CLI 之前的那一次会话**一定**会看到 `⚠ MCP client for rathflow failed to start: MCP startup failed: No such file or directory (os error 2)`：MCP server 是在会话启动时 spawn 的，那一刻 `rathflow` 还不在 `PATH` 上。这是预期顺序，不是插件坏了，也不需要去找源码或本地部署 —— 装完 CLI 重启 Codex 就好了。CLI 装好后仍然报 `handshaking with MCP server failed` / `connection closed` / 超时，才是真问题，把原文贴出来排查。
+
 已知限制：`mcp serve` 目前只在 **Python 版** CLI 里（npm 版尚未移植），所以要用 MCP 就得装 Python 包（`uv tool install rathflow-cli`）。Windows 上请确认 `rathflow.exe` 在 `PATH` 上。
 
 ## 许可证

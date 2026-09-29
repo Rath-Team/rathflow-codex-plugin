@@ -16,6 +16,22 @@ instructions only: it does not bundle the CLI, does not bundle an MCP server, an
 Gateway. The MCP server this plugin registers is `rathflow mcp serve` — a subcommand of the
 published CLI.
 
+## Expect one warning before the CLI exists
+
+Codex spawns a plugin's MCP servers at session start, so the first session after installing the
+plugin — while `rathflow` is still missing — always shows:
+
+```text
+⚠ MCP client for `rathflow` failed to start: MCP startup failed: No such file or directory (os error 2)
+```
+
+That is the expected ordering, not a broken plugin, and never a reason to look for a local RathFlow
+checkout or install anything by hand: `.mcp.json` runs the published CLI's `rathflow mcp serve`, and
+installing that CLI is what you are about to do (§2). Tell the user this once, up front, before they
+ask — then finish with the restart step in §8. A *different* MCP error after the CLI is installed
+(`handshaking with MCP server failed`, `connection closed`, a timeout) is real: quote it and
+investigate.
+
 ## 0. Work out the network situation yourself (do not ask the user)
 
 Never ask "do you use a proxy?". A new user does not know, and the answer only changes *how* you
@@ -248,6 +264,9 @@ start. So:
 - the tools appear in a **new** session. If the CLI was installed or upgraded in this session, the
   server in the running session already failed to start: restart Codex, then `codex mcp list` and a
   first tool call are the real proof;
+- if the session that installed the CLI greeted the user with `No such file or directory (os error 2)`
+  for `rathflow`, that message was about *this* ordering and nothing else — say so plainly instead of
+  letting it read as a defect, and repeat the restart step;
 - do not report MCP as working on the strength of the registration alone, and do not paper over a
   startup failure — quote it;
 - writes are off unless `RATHFLOW_MCP_WRITE=1` is set in the server's environment — do not turn it

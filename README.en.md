@@ -164,6 +164,15 @@ endpoint table as the CLI.
 - it loads in a **new** session only, and `codex mcp list` shows whether it is
   registered.
 
+Before the CLI is installed, the first session after adding the plugin **always**
+prints `⚠ MCP client for rathflow failed to start: MCP startup failed: No such
+file or directory (os error 2)`: Codex spawns MCP servers at session start, and at
+that moment `rathflow` is not on `PATH` yet. That is the expected ordering, not a
+broken plugin — it is not a reason to look for a source checkout or to install
+anything by hand, and it goes away once the CLI is installed and Codex is
+restarted. A `handshaking with MCP server failed` / `connection closed` / timeout
+*after* the CLI is installed is a real problem: quote it and investigate.
+
 Known limit: `mcp serve` currently ships in the **Python** package only (the npm
 CLI has not been ported yet), so using MCP means installing the Python package
 (`uv tool install rathflow-cli`). On Windows make sure `rathflow.exe` is on
