@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.11
+
+- Version alignment for pre-existing CLI installs. A machine can already have a
+  `rathflow` on `PATH` that answers `--help` but is not the released product — a
+  hand-written wrapper, an old virtualenv entry point, a pre-release dev build.
+  The plugin then registered `rathflow mcp serve` against a command without an
+  `mcp` subcommand, so the MCP server died at session start and the agent went
+  looking inside the plugin cache and that virtualenv. `rathflow-setup` now
+  detects it (`rathflow --version` < 0.1.5, or no `mcp` subcommand), installs the
+  released package, re-resolves `command -v rathflow`, and if the stale file still
+  shadows the new one moves it aside as `<path>.bak-<timestamp>` and says so.
+  Editing the virtualenv/checkout behind the old command is now explicitly
+  forbidden; `rathflow-cli` carries the same check before it operates.
+
 ## 0.1.10
 
 - The first MCP warning is now documented as expected instead of left to look

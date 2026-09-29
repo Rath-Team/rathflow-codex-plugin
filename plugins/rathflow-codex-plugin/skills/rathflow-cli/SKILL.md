@@ -12,6 +12,10 @@ Use the local `rathflow` command as the interface to RathFlow. The CLI is an HTT
 - Confirm that `rathflow` is installed and runnable with `rathflow --help`. The CLI is a released
   product: do not search the filesystem for source, a checkout, or a virtualenv, and do not build or
   install from a local source tree. If it is missing, follow the `rathflow-setup` skill.
+- Check that the resolved command is current: `rathflow --version` should be 0.1.5 or newer and
+  `rathflow mcp --help` should exist. `No such command 'mcp'` means `PATH` resolves to a stale
+  install — align it (see the `rathflow-setup` skill) instead of working around it through the old
+  virtualenv.
 - Confirm the effective endpoint, profile, and project with `rathflow config show`. Precedence is
   `--base-url`/`--project` flag > `RATHFLOW_BASE_URL`/`RATHFLOW_PROJECT`/`RATHFLOW_TOKEN` > profile >
   built-in default `https://rathflow.lynwe.com`. `RATHFLOW_CONFIG_DIR` moves the config file away from

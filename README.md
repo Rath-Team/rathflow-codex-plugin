@@ -136,6 +136,8 @@ Codex 应该调用 `rathflow session list` 这类 CLI 命令，而不是绕过 C
 
 已知限制：`mcp serve` 目前只在 **Python 版** CLI 里（npm 版尚未移植），所以要用 MCP 就得装 Python 包（`uv tool install rathflow-cli`）。Windows 上请确认 `rathflow.exe` 在 `PATH` 上。
 
+如果 `rathflow --version` 低于 0.1.5，或者 `rathflow mcp serve --help` 报 `No such command 'mcp'`，说明 `PATH` 上是一个旧安装（常见的：以前留下的手写 wrapper、旧 venv 的入口、旧 dev 版）。插件会按提示对齐：从 PyPI 升级后重新解析 `command -v rathflow`；若旧文件仍在前面遮蔽新版，就把它移到 `<path>.bak-<时间戳>` 并告诉你移了哪个文件。不要去改它背后那个 venv。
+
 ## 许可证
 
 本仓库（插件指令与实验性 MCP server）采用 MIT，见 `LICENSE`；不涉及 RathFlow 服务端与 CLI 本体。

@@ -173,6 +173,13 @@ anything by hand, and it goes away once the CLI is installed and Codex is
 restarted. A `handshaking with MCP server failed` / `connection closed` / timeout
 *after* the CLI is installed is a real problem: quote it and investigate.
 
+If `rathflow --version` is older than 0.1.5, or `rathflow mcp serve --help` says
+`No such command 'mcp'`, the command on `PATH` is a stale install (typically a
+hand-written wrapper, an old virtualenv entry point, or a pre-release dev build).
+Setup aligns it: install the released package, re-resolve `command -v rathflow`,
+and if the stale file still shadows the new one, move it to `<path>.bak-<timestamp>`
+and tell you which file moved. Never edit the virtualenv behind it.
+
 Known limit: `mcp serve` currently ships in the **Python** package only (the npm
 CLI has not been ported yet), so using MCP means installing the Python package
 (`uv tool install rathflow-cli`). On Windows make sure `rathflow.exe` is on

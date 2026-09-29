@@ -98,6 +98,36 @@ Treat the CLI as a released product: its installed command is the only supported
 **not** search the filesystem for RathFlow source or a project checkout, do not look for a
 virtualenv, and do not build or install RathFlow from a local source tree.
 
+### Align the version: an old `rathflow` on `PATH` is not "installed"
+
+Real machines often carry a stale `rathflow` from an earlier era — a hand-written wrapper, a
+virtualenv entry point, something a previous project left behind. It answers `command -v rathflow`
+and `rathflow --help`, so a naive check calls it installed, but it is not the published CLI and
+`rathflow mcp serve` answers `No such command 'mcp'`. That is exactly why the plugin's MCP server
+fails to start on such a machine. Detect it:
+
+```bash
+command -v rathflow          # remember this path
+rathflow --version           # must be 0.1.5 or newer
+rathflow mcp --help          # "No such command" / unknown command ⇒ stale
+```
+
+When either check fails, align it instead of reporting a blocker — install the released package,
+then **re-resolve** the command:
+
+```bash
+uv tool install --force --refresh 'rathflow-cli[socks]'   # or pipx install --force … / python3 -m pip install --user --upgrade …
+command -v rathflow
+rathflow --version && rathflow mcp serve --help
+```
+
+If `command -v rathflow` still resolves to the old path, that file is **shadowing** the fresh
+install because its directory comes first on `PATH`. Fix the shadowing rather than living with it:
+move the stale file aside (`mv <path> <path>.bak-$(date +%s)`), confirm the released one now wins,
+and tell the user which file you moved and why. Only ever touch the `rathflow` command that `PATH`
+resolves to — never edit a virtualenv's `site-packages`, never patch a checkout, never
+`pip install -e`. State which version you ended on.
+
 ## 2. If the CLI is missing, install it from a public registry and continue
 
 `rathflow-cli` is a normal package on **PyPI** (Python 3.10+) and **npm** (Node 20+); both ship the
@@ -299,6 +329,9 @@ skill instead of repeating setup.
 ## Never do this
 
 - Never search the filesystem for a RathFlow checkout, and never build or run RathFlow from source.
+- Never "fix" a stale `rathflow` by editing the virtualenv, checkout or shell function it points at.
+  Align the command on `PATH` (upgrade, then move the shadowing file aside) and re-run the version
+  checks; report the path you resolved and the file you moved.
 - Never start a Gateway.
 - Never install an MCP server from anywhere except the published `rathflow-cli` package.
 - Never edit the user's global git config, shell rc, or system proxy settings; pass proxy and
